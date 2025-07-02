@@ -1,5 +1,10 @@
 // Thanks to froos
 
+/**
+ * Block class representing a node in an audio graph.
+ * This class allows for the creation of audio processing blocks with a type and inputs.
+ * It provides methods to compile the block into a code representation that can be used in an audio processing context.
+ */ 
 export class Block {
     type: string;
     inputs: Block[];
@@ -19,8 +24,9 @@ export class Block {
 
     compile() {
         let blocks = Array.from(topoSort(this));
-        const getRef = (block: Block) =>
-          typeof block !== "object" ? block : `v${blocks.indexOf(block)}`;
+        const getRef = (block: Block) => typeof block !== "object" 
+            ? block 
+            : `v${blocks.indexOf(block)}`;
         let lines = [];
         for (let id in blocks) {
           const block = blocks[id];
@@ -36,7 +42,8 @@ export class Block {
 // 👇 Accepts both Blocks and numbers
 type BlockInput = Block | number;
 
-// Converts number inputs into "const" Blocks
+// Converts number inputs into "signal" Blocks
+// TODO: is this necessary?
 function toBlock(input: BlockInput): Block {
     return input instanceof Block ? input : new Block("sig", [input as any]);
 }
