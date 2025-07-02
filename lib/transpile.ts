@@ -73,17 +73,25 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
     yield block;
 }
 
-const sine = registerBlock("sine");
-const tri = registerBlock("tri");
-const square = registerBlock("square");
-const saw = registerBlock("saw");
-const out = registerBlock("out");
-const lfo = registerBlock("lfo");
+const library = [
+    'sine', 'tri', 'square', 'saw', 
+    'lfo',
+    'out', 
+]
+    .reduce((acc, type) => {
+        acc[type] = registerBlock(type);
+        return acc;
+    }, {} as Record<string, (...args: BlockInput[]) => Block>);
 
 export const transpile = (code: string): string => {
     try {
-        const block = eval(code);
+        const block = new Function(
+            ...Object.keys(library), 
+            `return (${code});`
+        )(...Object.values(library));
+        
         const compiled = block.compile();
+        
         return compiled.lines.join("\n");
     } catch (error) {
         console.error("Error during transpilation:", error);

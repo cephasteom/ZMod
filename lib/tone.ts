@@ -1,5 +1,6 @@
 import { 
     Merge, 
+    Signal,
     getDestination,
     Oscillator, LFO,
     Limiter
@@ -25,16 +26,12 @@ const makeOsc = (type: Oscillator['type'], freq: number | LFO) => {
 }
 
 const sig = (value: number) => value
-
-const lfo = (freq: number, min: number, max: number) => new LFO(freq, min, max).start()
 const sine = (freq: number | LFO) => makeOsc('sine', freq)
+const tri = (freq: number | LFO) => makeOsc('triangle', freq)
 const square = (freq: number | LFO) => makeOsc('square', freq)
 const saw = (freq: number | LFO) => makeOsc('sawtooth', freq)
-const tri = (freq: number | LFO) => makeOsc('triangle', freq)
-
-const out = (block: any, channel: number) => {
-    block.toDestination();
-}
+const lfo = (freq: number, min: number, max: number) => new LFO(freq, min, max).start()
+const out = (block: any) => block.toDestination();
 
 export const library = {
     sig,
@@ -44,4 +41,11 @@ export const library = {
     tri,
     lfo,
     out
+}
+
+export const compile = (code: string): void => {
+    new Function(
+        ...Object.keys(library), 
+        code
+    )(...Object.values(library))
 }
