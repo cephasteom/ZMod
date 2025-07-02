@@ -3,7 +3,7 @@ import {
     Signal,
     getDestination,
     Oscillator, LFO,
-    FMOscillator,
+    FMOscillator, AMOscillator, PWMOscillator,
     Limiter
 } from 'tone'
 
@@ -50,6 +50,32 @@ export const library = {
             : fmOsc.modulationIndex.value = modi
         return fmOsc
     },
+    am: (
+        freq: number | Signal | LFO = 220, 
+        harm: number | Signal | LFO = 1
+    ) => {
+        const amOsc = new AMOscillator(440, 'sine', 'sine').start()
+        freq instanceof LFO || freq instanceof Signal
+            ? freq.connect(amOsc.frequency)
+            : amOsc.frequency.value = freq
+        harm instanceof LFO || harm instanceof Signal
+            ? harm.connect(amOsc.harmonicity)
+            : amOsc.harmonicity.value = harm
+        return amOsc
+    },
+    pwm: (
+        freq: number | Signal | LFO = 220, 
+        width: number | Signal | LFO = 0.5
+    ) => {
+        const pwmOsc = new PWMOscillator(220, 0.5).start()
+        freq instanceof LFO || freq instanceof Signal
+            ? freq.connect(pwmOsc.frequency)
+            : pwmOsc.frequency.value = freq
+        width instanceof LFO || width instanceof Signal
+            ? width.connect(pwmOsc.modulationFrequency)
+            : pwmOsc.modulationFrequency.value = width
+        return pwmOsc
+    },
     lfo: (freq: number | Signal, min: number = 0, max: number = 1) => {
         const lfo = new LFO(1, min, max).start()
         freq instanceof Signal
@@ -57,11 +83,11 @@ export const library = {
             : lfo.frequency.value = freq
         return lfo
     },
-    out:  (block: any) => block.toDestination()
+    out: (node: any) => node.toDestination(),
 }
 
 export const compile = (code: string): void => {
-    new Function(
+    return new Function(
         ...Object.keys(library), 
         code
     )(...Object.values(library))

@@ -19,8 +19,8 @@ export class Block {
         
     }
 
-    toCode(block: Block, ref: string, args: any[]) {
-        return `let ${ref} = ${block.type}(${args.join(",")})`;
+    toCode(block: Block, ref: string, args: any[], isLast: boolean = false): string {
+        return `${isLast ? 'return ' : `let ${ref} = `}${block.type}(${args.join(",")})`;
     }
 
     compile() {
@@ -30,10 +30,11 @@ export class Block {
             : `v${blocks.indexOf(block)}`;
         let lines = [];
         for (let id in blocks) {
-          const block = blocks[id];
-          const args = block.inputs.map(getRef);
-          const ref = getRef(block);
-          lines.push(block.toCode(block, ref, args));
+            const isLast = id === String(blocks.length - 1);
+            const block = blocks[id];
+            const args = block.inputs.map(getRef);
+            const ref = getRef(block);
+            lines.push(block.toCode(block, ref, args, isLast));
         }
         // TODO: why do we need to return the last block?
         const last = getRef(blocks[blocks.length - 1]);
