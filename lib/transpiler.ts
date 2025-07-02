@@ -1,3 +1,5 @@
+import { Block } from "./block";
+
 /**
  * Transpiler for Zen Blocks.
  * 
@@ -7,5 +9,15 @@
  * 
  */
 export class Transpiler {
-    constructor(graph) {
-        this.code    
+    _graph: Block;
+    
+    constructor(graph: Block) {
+        // Initialize the transpiler with the provided graph
+        this._graph = graph;
+    }
+
+    set graph(graph: Block) {
+        // Set a new graph for the transpiler
+        this._graph = graph;
+    }
+}
