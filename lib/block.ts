@@ -73,9 +73,20 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
     yield block;
 }
 
-export const sine = registerBlock("sine");
-export const tri = registerBlock("tri");
-export const square = registerBlock("square");
-export const saw = registerBlock("saw");
-export const out = registerBlock("out");
-export const lfo = registerBlock("lfo");
+const sine = registerBlock("sine");
+const tri = registerBlock("tri");
+const square = registerBlock("square");
+const saw = registerBlock("saw");
+const out = registerBlock("out");
+const lfo = registerBlock("lfo");
+
+export const transpile = (code: string): string => {
+    try {
+        const block = eval(code);
+        const compiled = block.compile();
+        return compiled.lines.join("\n");
+    } catch (error) {
+        console.error("Error during transpilation:", error);
+        return "";
+    }
+}

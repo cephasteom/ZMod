@@ -1,10 +1,9 @@
 import { library } from "./tone.js";
-import { sine, tri, saw, square, out, lfo } from "./block.js";
+import { transpile } from "./block.js";
 
 
 // Example usage
-// @ts-ignore
-const code = saw(lfo(100, 100, 240)).out(0).compile().lines.join("\n");
+const code = transpile(`saw(lfo(100, 100, 240)).out(0)`);
 let play = false
 // play = true
 
