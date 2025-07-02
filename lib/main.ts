@@ -1,4 +1,4 @@
-import { blocks } from "./blocks.js";
+import { library } from "./tone.js";
 import { sine, tri, saw, square, out, lfo } from "./block.js";
 
 
@@ -10,7 +10,7 @@ let play = false
 
 if(play) {
     new Function(
-        ...Object.keys(blocks), 
+        ...Object.keys(library), 
         code
-    )(...Object.values(blocks));
+    )(...Object.values(library));
 }

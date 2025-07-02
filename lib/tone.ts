@@ -36,7 +36,7 @@ const out = (block: any, channel: number) => {
     block.toDestination();
 }
 
-export const blocks = {
+export const library = {
     sig,
     sine,
     square,
