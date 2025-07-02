@@ -46,7 +46,7 @@ type BlockInput = Block | number;
 // Converts number inputs into "signal" Blocks
 // TODO: is this necessary?
 function toBlock(input: BlockInput): Block {
-    return input instanceof Block ? input : new Block("sig", [input as any]);
+    return input instanceof Block ? input : new Block("value", [input as any]);
 }
 
 // 👇 Dynamically adds a method to Block.prototype
@@ -74,7 +74,7 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
 }
 
 const library = [
-    'sine', 'tri', 'square', 'saw', 
+    'sig', 'sine', 'tri', 'square', 'saw', 
     'lfo',
     'out', 
 ]

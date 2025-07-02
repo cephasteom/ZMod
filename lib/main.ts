@@ -1,12 +1,7 @@
 import { transpile } from "./transpile.js";
 import { compile } from "./tone.js";
 
+const code = transpile(`sine(lfo(sig(1),100,200)).out(0)`);
 
-// Example usage
-const code = transpile(`sine(lfo(0.5,100,200)).out(0)`);
-let play = false
-// play = true
-
-if(play) {
-    compile(code);
-}
+false &&
+compile(code);
