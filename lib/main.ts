@@ -1,7 +1,16 @@
 import { transpile } from "./transpile.js";
 import { compile } from "./tone.js";
 
-const code = transpile(`fm(lfo(1,100,150),lfo(0.5,1,11),lfo(0.75,100,1)).out(0)`);
+const button = document.getElementById("run");
+const codeInput = document.getElementById("code") as HTMLTextAreaElement;
 
-false &&
-compile(code);
+button?.addEventListener("click", () => {
+    const code = codeInput.value;
+    try {
+        const transpiledCode = transpile(code);
+        compile(transpiledCode);
+        console.log("Code compiled successfully");
+    } catch (error) {
+        console.error("Error compiling code:", error);
+    }
+});
