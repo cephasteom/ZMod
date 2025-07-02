@@ -1,0 +1,29 @@
+{
+  "name": "zen-blocks",
+  "version": "1.0.0",
+  "description": "A DSP library for generating audiographs from higher level audio components. Built with RNBO, and for zen.cephasteom.co.uk. But hopefully useful elsewhere.",
+  "author": "CephasTeom",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/zen-blocks.es.js",
+  "module": "./dist/zen-blocks.es.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/zen-blocks.es.js",
+      "require": "./dist/zen-blocks.umd.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.10",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0"
+  }
+}
