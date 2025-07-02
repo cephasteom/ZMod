@@ -3,6 +3,7 @@ import {
     Signal,
     getDestination,
     Oscillator, LFO,
+    FMOscillator,
     Limiter
 } from 'tone'
 
@@ -25,30 +26,38 @@ const makeOsc = (type: Oscillator['type'], freq: number | Signal | LFO) => {
     return osc
 }
 
-const value = (val: number) => val
-const sig = (value: number) => new Signal(value)
-const sine = (freq: number | LFO) => makeOsc('sine', freq)
-const tri = (freq: number | LFO) => makeOsc('triangle', freq)
-const square = (freq: number | LFO) => makeOsc('square', freq)
-const saw = (freq: number | LFO) => makeOsc('sawtooth', freq)
-const lfo = (freq: number | Signal, min: number, max: number) => {
-    const lfo = new LFO(1, min, max).start()
-    freq instanceof Signal
-        ? freq.connect(lfo.frequency)
-        : lfo.frequency.value = freq
-    return lfo
-}
-const out = (block: any) => block.toDestination();
-
 export const library = {
-    value,
-    sig,
-    sine,
-    square,
-    saw,
-    tri,
-    lfo,
-    out
+    value: (val: number) => val,
+    sig: (value: number) => new Signal(value),
+    sine: (freq: number | Signal | LFO) => makeOsc('sine', freq),
+    tri: (freq: number | Signal | LFO) => makeOsc('triangle', freq),
+    square: (freq: number | Signal | LFO) => makeOsc('square', freq),
+    saw: (freq: number | Signal | LFO) => makeOsc('sawtooth', freq),
+    fm: (
+        freq: number | Signal | LFO = 220, 
+        harm: number | Signal | LFO = 1, 
+        modi: number | Signal | LFO = 1
+    ) => {
+        const fmOsc = new FMOscillator(440, 'sine', 'sine').start()
+        freq instanceof LFO || freq instanceof Signal
+            ? freq.connect(fmOsc.frequency)
+            : fmOsc.frequency.value = freq
+        harm instanceof LFO || harm instanceof Signal
+            ? harm.connect(fmOsc.harmonicity)
+            : fmOsc.harmonicity.value = harm
+        modi instanceof LFO || modi instanceof Signal
+            ? modi.connect(fmOsc.modulationIndex)
+            : fmOsc.modulationIndex.value = modi
+        return fmOsc
+    },
+    lfo: (freq: number | Signal, min: number = 0, max: number = 1) => {
+        const lfo = new LFO(1, min, max).start()
+        freq instanceof Signal
+            ? freq.connect(lfo.frequency)
+            : lfo.frequency.value = freq
+        return lfo
+    },
+    out:  (block: any) => block.toDestination()
 }
 
 export const compile = (code: string): void => {

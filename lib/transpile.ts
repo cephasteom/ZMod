@@ -1,4 +1,5 @@
-// Thanks to froos
+// TODO: Thanks to froos
+import { library } from "./tone";
 
 /**
  * Block class representing a node in an audio graph.
@@ -73,11 +74,7 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
     yield block;
 }
 
-const library = [
-    'sig', 'sine', 'tri', 'square', 'saw', 
-    'lfo',
-    'out', 
-]
+const blocks = Object.keys(library)
     .reduce((acc, type) => {
         acc[type] = registerBlock(type);
         return acc;
@@ -86,9 +83,9 @@ const library = [
 export const transpile = (code: string): string => {
     try {
         const block = new Function(
-            ...Object.keys(library), 
+            ...Object.keys(blocks), 
             `return (${code});`
-        )(...Object.values(library));
+        )(...Object.values(blocks));
         
         const compiled = block.compile();
         
