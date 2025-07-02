@@ -1,7 +1,16 @@
-console.log("Zen Blocks Playground Loaded");
+import { blocks } from "./blocks.js";
+import { sine, tri, saw, square, out, lfo } from "./block.js";
 
-import { sine, out } from "./block.js";
 
 // Example usage
 // @ts-ignore
-console.log(sine(440).out(0).compile());
+const code = saw(lfo(100, 100, 240)).out(0).compile().lines.join("\n");
+let play = false
+// play = true
+
+if(play) {
+    new Function(
+        ...Object.keys(blocks), 
+        code
+    )(...Object.values(blocks));
+}

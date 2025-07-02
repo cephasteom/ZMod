@@ -19,7 +19,7 @@ export class Block {
     }
 
     toCode(block: Block, ref: string, args: any[]) {
-        return `let ${ref} = lib.${block.type}(${args.join(",")})`;
+        return `let ${ref} = ${block.type}(${args.join(",")})`;
     }
 
     compile() {
@@ -34,6 +34,7 @@ export class Block {
           const ref = getRef(block);
           lines.push(block.toCode(block, ref, args));
         }
+        // TODO: why do we need to return the last block?
         const last = getRef(blocks[blocks.length - 1]);
         return { lines, last };
     }
@@ -73,4 +74,8 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
 }
 
 export const sine = registerBlock("sine");
+export const tri = registerBlock("tri");
+export const square = registerBlock("square");
+export const saw = registerBlock("saw");
 export const out = registerBlock("out");
+export const lfo = registerBlock("lfo");
