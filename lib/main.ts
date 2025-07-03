@@ -1,11 +1,12 @@
 import { transpile } from "./transpile.js";
 import { compile } from "./tone.js";
 
-const run = document.getElementById("run");
-const stop = document.getElementById("stop");
-const codeInput = document.getElementById("code") as HTMLTextAreaElement;
 let graph: any;
 let lastTranspiledCode: string = ''
+
+const runButton = document.getElementById("run");
+const stopButton = document.getElementById("stop");
+const codeInput = document.getElementById("code") as HTMLTextAreaElement;
 
 const dispose = (graph: any) => {
     graph?.volume?.rampTo(-Infinity, 0.1); // Fade out volume
@@ -15,8 +16,7 @@ const dispose = (graph: any) => {
     }, 1000); // Allow time for fade out
 }
 
-
-run?.addEventListener("click", () => {
+const run = () => {
     const code = codeInput.value;
     try {
         const transpiledCode = transpile(code);
@@ -27,10 +27,27 @@ run?.addEventListener("click", () => {
     } catch (error) {
         console.error("Error compiling code:", error);
     }
-});
+}
 
-stop?.addEventListener("click", () => {
+const stop = () => {
     dispose(graph)
     graph = null; // Clear the graph reference
     lastTranspiledCode = ''; // Reset the last transpiled code
-})
+}
+
+runButton?.addEventListener("click", run);
+stopButton?.addEventListener("click", stop)
+
+// if listener presses shift and enter, run the code
+codeInput?.addEventListener("keydown", (event) => {
+    if (!(event.shiftKey && event.key === "Enter")) return
+    event.preventDefault(); // Prevent default behavior of new line
+    run();
+});
+
+// if listener presses esc, stop the code
+codeInput?.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault(); // Prevent default behavior of escape
+    stop();
+});

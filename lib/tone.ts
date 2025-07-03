@@ -37,12 +37,14 @@ const assignOrConnect = (target: Signal<any> | AudioParam, value: MaybeSignal) =
 export const library = {
     value: (val: number) => val,
     sig: (value: number) => new Signal(value),
+    
     // Base Oscillators
     ...Object.fromEntries(['sine', 'triangle', 'square', 'sawtooth']
         .map(type => [
             type,
             (freq: MaybeSignal) => makeOsc(type as ToneOscillatorType, freq)
         ])),
+    
     // Complex Oscillators
     fm: (
         frequency: MaybeSignal = 220, 
@@ -73,6 +75,7 @@ export const library = {
         assignOrConnect(pwmOsc.modulationFrequency, modulationFrequency)
         return pwmOsc
     },
+    
     // LFO
     lfo: (frequency: number | Signal, min: number = 0, max: number = 1) => {
         const lfo = new LFO(1, min, max).start()
