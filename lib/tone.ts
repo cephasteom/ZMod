@@ -17,9 +17,10 @@ const allChannels = new Merge({channels: destination.maxChannelCount})
 allChannels.connect(destination)
 
 // HELPERS
-type MaybeSignal = number | Signal | LFO;
+type MaybeSignal = number | Signal | LFO | undefined;
 
 const makeOsc = (type: ToneOscillatorType, freq: MaybeSignal) => {
+    if (freq === undefined) freq = 440; // Default frequency
     const osc = new Oscillator(440, type).start()
     freq instanceof LFO || freq instanceof Signal
         ? freq.connect(osc.frequency)
@@ -28,6 +29,7 @@ const makeOsc = (type: ToneOscillatorType, freq: MaybeSignal) => {
 }
 
 const assignOrConnect = (target: Signal<any> | AudioParam, value: MaybeSignal) => {
+    if (value === undefined) return;
     value instanceof LFO || value instanceof Signal
         ? value.connect(target)
         : (target as Signal | AudioParam).value = value;
@@ -46,33 +48,25 @@ export const library = {
         ])),
     
     // Complex Oscillators
-    fm: (
-        frequency: MaybeSignal = 220, 
-        harmonicity: MaybeSignal = 1, 
-        modulationIndex: MaybeSignal = 1
-    ) => {
-        const fmOsc = new FMOscillator(440, 'sine', 'sine').start()
-        assignOrConnect(fmOsc.frequency, frequency)
-        assignOrConnect(fmOsc.harmonicity, harmonicity)
-        assignOrConnect(fmOsc.modulationIndex, modulationIndex)
+    fm: (...args: MaybeSignal[]) => {
+        const fmOsc = new FMOscillator(220, 'sine', 'sine').start();
+        ['frequency', 'harmonicity', 'modulationIndex'].forEach((param, index) => {
+            assignOrConnect((fmOsc as any)[param], args[index])
+        })
         return fmOsc
     },
-    am: (
-        frequency: MaybeSignal = 220, 
-        harmonicity: MaybeSignal = 1
-    ) => {
-        const amOsc = new AMOscillator(440, 'sine', 'sine').start()
-        assignOrConnect(amOsc.frequency, frequency)
-        assignOrConnect(amOsc.harmonicity, harmonicity)
+    am: (...args: MaybeSignal[]) => {
+        const amOsc = new AMOscillator(220, 'sine', 'sine').start();
+        ['frequency', 'harmonicity'].forEach((param, index) => {
+            assignOrConnect((amOsc as any)[param], args[index])
+        })
         return amOsc
     },
-    pwm: (
-        frequency: MaybeSignal = 220, 
-        modulationFrequency: MaybeSignal = 0.5
-    ) => {
-        const pwmOsc = new PWMOscillator(220, 0.5).start()
-        assignOrConnect(pwmOsc.frequency, frequency)
-        assignOrConnect(pwmOsc.modulationFrequency, modulationFrequency)
+    pwm: (...args: MaybeSignal[]) => {
+        const pwmOsc = new PWMOscillator(220, 0.5).start();
+        ['frequency', 'modulationFrequency'].forEach((param, index) => {
+            assignOrConnect((pwmOsc as any)[param], args[index])
+        })
         return pwmOsc
     },
     
