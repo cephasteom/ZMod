@@ -1,5 +1,6 @@
 import { transpile } from "./transpile.js";
 import { compile } from "./tone.js";
+import { Gain } from "tone";
 
 let graph: any;
 let lastTranspiledCode: string = ''
@@ -8,8 +9,8 @@ const runButton = document.getElementById("run");
 const stopButton = document.getElementById("stop");
 const codeInput = document.getElementById("code") as HTMLTextAreaElement;
 
-const dispose = (graph: any) => {
-    graph?.volume?.rampTo(-Infinity, 0.1); // Fade out volume
+const dispose = (graph: Gain) => {
+    graph?.gain?.rampTo(0, 0.1); // Fade out volume
     setTimeout(() => {
         graph?.dispose?.(); // Dispose of the node after fade out
         console.log("Node disposed after fade out.");

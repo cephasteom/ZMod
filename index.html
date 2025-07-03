@@ -22,7 +22,7 @@
 <body>
 <h1>Zen Blocks</h1>
 <textarea id="code" rows="10" cols="50">
-fm(100,0.5,lfo(0.75,100,1)).out(0)
+fm(100,0.5,lfo(sig(1),100,1)).mul(0.5).out(0)
 </textarea>
 <button id="run">Run</button>
 <button id="stop">Stop</button>
