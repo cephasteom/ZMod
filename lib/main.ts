@@ -11,10 +11,7 @@ const codeInput = document.getElementById("code") as HTMLTextAreaElement;
 
 const dispose = (graph: Gain) => {
     graph?.gain?.rampTo(0, 0.1); // Fade out volume
-    setTimeout(() => {
-        graph?.dispose?.(); // Dispose of the node after fade out
-        console.log("Node disposed after fade out.");
-    }, 1000); // Allow time for fade out
+    setTimeout(() => graph?.dispose?.(), 1000); // Allow time for fade out
 }
 
 const run = () => {

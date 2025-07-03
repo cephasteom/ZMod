@@ -4,7 +4,7 @@ import {
     getDestination,
     Oscillator, LFO,
     FMOscillator, AMOscillator, PWMOscillator,
-    Limiter, Gain,
+    Limiter, Gain, Envelope,
     Multiply,
     type ToneOscillatorType
 } from 'tone'
@@ -18,7 +18,7 @@ const allChannels = new Merge({channels: destination.maxChannelCount})
 allChannels.connect(destination)
 
 // HELPERS
-type MaybeSignal = number | Signal | LFO | undefined;
+type MaybeSignal = number | Signal | LFO | Envelope | undefined;
 
 const makeOutput = (node: Oscillator | FMOscillator | AMOscillator | PWMOscillator): Gain => {
     const gain = new Gain(1)
@@ -26,18 +26,15 @@ const makeOutput = (node: Oscillator | FMOscillator | AMOscillator | PWMOscillat
     return gain
 }
 
-const makeOsc = (type: ToneOscillatorType, freq: MaybeSignal): Gain => {
-    if (freq === undefined) freq = 440; // Default frequency
-    const osc = new Oscillator(440, type).start()
-    freq instanceof LFO || freq instanceof Signal
-        ? freq.connect(osc.frequency)
-        : osc.frequency.value = freq
+const makeOsc = (type: ToneOscillatorType, freq: MaybeSignal = 220): Gain => {
+    const osc = new Oscillator(220, type).start()
+    assignOrConnect(osc.frequency, freq)
     return makeOutput(osc)
 }
 
-const assignOrConnect = (target: Signal<any> | Param<any>, value: MaybeSignal) => {
+function assignOrConnect(target: Signal<any> | Param<any>, value: MaybeSignal) {
     if (value === undefined) return;
-    value instanceof LFO || value instanceof Signal
+    value instanceof LFO || value instanceof Signal || value instanceof Envelope
         ? value.connect(target)
         : (target as Signal | AudioParam).value = value;
 }
@@ -84,18 +81,25 @@ export const library = {
         return lfo
     },
 
+    env: (attack: number = 0.1, decay: number = 0.2, sustain: number = 0.5, release: number = 0.8): Envelope => {
+        const env = new Envelope({attack, decay, sustain, release});
+        env.triggerAttackRelease(10)
+        return env
+    },
+
     mul: (
         node: Gain | Signal,
-        value: number | Signal
-    ) => {
+        value: number | Signal | Envelope
+    ): Gain | Signal => {
         if (node instanceof Gain) assignOrConnect(node.gain, value)
         if (node instanceof Signal) {
             if(typeof value === 'number') return node.rampTo(value, 0.1)
-            
-            const mult = new Multiply();
-            node.connect(mult);
-            value.connect(mult.factor);
-            return mult;
+            if (value instanceof Signal || value instanceof Envelope) {
+                const mult = new Multiply();
+                node.connect(mult);
+                value.connect(mult.factor);
+                return mult;
+            }
         }
 
         return node
