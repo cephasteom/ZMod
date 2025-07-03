@@ -4,21 +4,22 @@ import {
     getDestination,
     Oscillator, LFO,
     FMOscillator, AMOscillator, PWMOscillator,
-    Limiter
+    Limiter,
+    type ToneOscillatorType
 } from 'tone'
 
-// Limiter
+// ROUTING
 const limiter = new Limiter({threshold: -20})
-
-// Output
 const destination = getDestination()
 destination.channelCount = destination.maxChannelCount
 destination.channelCount === 2 && destination.chain(limiter)
-
-export const allChannels = new Merge({channels: destination.maxChannelCount})
+const allChannels = new Merge({channels: destination.maxChannelCount})
 allChannels.connect(destination)
 
-const makeOsc = (type: Oscillator['type'], freq: number | Signal | LFO) => {
+// HELPERS
+type MaybeSignal = number | Signal | LFO;
+
+const makeOsc = (type: ToneOscillatorType, freq: MaybeSignal) => {
     const osc = new Oscillator(440, type).start()
     freq instanceof LFO || freq instanceof Signal
         ? freq.connect(osc.frequency)
@@ -26,61 +27,56 @@ const makeOsc = (type: Oscillator['type'], freq: number | Signal | LFO) => {
     return osc
 }
 
+const assignOrConnect = (target: Signal<any> | AudioParam, value: MaybeSignal) => {
+    value instanceof LFO || value instanceof Signal
+        ? value.connect(target)
+        : (target as Signal | AudioParam).value = value;
+}
+
+// LIBRARY
 export const library = {
     value: (val: number) => val,
     sig: (value: number) => new Signal(value),
-    sine: (freq: number | Signal | LFO) => makeOsc('sine', freq),
-    tri: (freq: number | Signal | LFO) => makeOsc('triangle', freq),
-    square: (freq: number | Signal | LFO) => makeOsc('square', freq),
-    saw: (freq: number | Signal | LFO) => makeOsc('sawtooth', freq),
+    // Base Oscillators
+    ...Object.fromEntries(['sine', 'triangle', 'square', 'sawtooth']
+        .map(type => [
+            type,
+            (freq: MaybeSignal) => makeOsc(type as ToneOscillatorType, freq)
+        ])),
+    // Complex Oscillators
     fm: (
-        freq: number | Signal | LFO = 220, 
-        harm: number | Signal | LFO = 1, 
-        modi: number | Signal | LFO = 1
+        frequency: MaybeSignal = 220, 
+        harmonicity: MaybeSignal = 1, 
+        modulationIndex: MaybeSignal = 1
     ) => {
         const fmOsc = new FMOscillator(440, 'sine', 'sine').start()
-        freq instanceof LFO || freq instanceof Signal
-            ? freq.connect(fmOsc.frequency)
-            : fmOsc.frequency.value = freq
-        harm instanceof LFO || harm instanceof Signal
-            ? harm.connect(fmOsc.harmonicity)
-            : fmOsc.harmonicity.value = harm
-        modi instanceof LFO || modi instanceof Signal
-            ? modi.connect(fmOsc.modulationIndex)
-            : fmOsc.modulationIndex.value = modi
+        assignOrConnect(fmOsc.frequency, frequency)
+        assignOrConnect(fmOsc.harmonicity, harmonicity)
+        assignOrConnect(fmOsc.modulationIndex, modulationIndex)
         return fmOsc
     },
     am: (
-        freq: number | Signal | LFO = 220, 
-        harm: number | Signal | LFO = 1
+        frequency: MaybeSignal = 220, 
+        harmonicity: MaybeSignal = 1
     ) => {
         const amOsc = new AMOscillator(440, 'sine', 'sine').start()
-        freq instanceof LFO || freq instanceof Signal
-            ? freq.connect(amOsc.frequency)
-            : amOsc.frequency.value = freq
-        harm instanceof LFO || harm instanceof Signal
-            ? harm.connect(amOsc.harmonicity)
-            : amOsc.harmonicity.value = harm
+        assignOrConnect(amOsc.frequency, frequency)
+        assignOrConnect(amOsc.harmonicity, harmonicity)
         return amOsc
     },
     pwm: (
-        freq: number | Signal | LFO = 220, 
-        width: number | Signal | LFO = 0.5
+        frequency: MaybeSignal = 220, 
+        modulationFrequency: MaybeSignal = 0.5
     ) => {
         const pwmOsc = new PWMOscillator(220, 0.5).start()
-        freq instanceof LFO || freq instanceof Signal
-            ? freq.connect(pwmOsc.frequency)
-            : pwmOsc.frequency.value = freq
-        width instanceof LFO || width instanceof Signal
-            ? width.connect(pwmOsc.modulationFrequency)
-            : pwmOsc.modulationFrequency.value = width
+        assignOrConnect(pwmOsc.frequency, frequency)
+        assignOrConnect(pwmOsc.modulationFrequency, modulationFrequency)
         return pwmOsc
     },
-    lfo: (freq: number | Signal, min: number = 0, max: number = 1) => {
+    // LFO
+    lfo: (frequency: number | Signal, min: number = 0, max: number = 1) => {
         const lfo = new LFO(1, min, max).start()
-        freq instanceof Signal
-            ? freq.connect(lfo.frequency)
-            : lfo.frequency.value = freq
+        assignOrConnect(lfo.frequency, frequency)
         return lfo
     },
     out: (node: any) => node.toDestination(),
