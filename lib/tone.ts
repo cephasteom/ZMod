@@ -39,6 +39,13 @@ function assignOrConnect(target: Signal<any> | Param<any>, value: MaybeSignal) {
         : (target as Signal | AudioParam).value = value;
 }
 
+/**
+ * TODO: maybe this should be a class?
+ * This is a collection of inputs that are exposed by the compiled code.
+ * It allows you to interact with the audio graph from outside the code.
+ */
+let inputs: Record<string, Signal | Envelope> = {}
+
 // LIBRARY
 export const library = {
     value: (val: number) => val,
@@ -83,7 +90,8 @@ export const library = {
 
     env: (attack: number = 0.1, decay: number = 0.2, sustain: number = 0.5, release: number = 0.8): Envelope => {
         const env = new Envelope({attack, decay, sustain, release});
-        env.triggerAttackRelease(10)
+        // add to the inputs so it can be accessed later
+        inputs['env'] = env;
         return env
     },
 
@@ -105,12 +113,15 @@ export const library = {
         return node
     },
 
-    out: (node: any) => node.toDestination(),
+    out: (node: any) => node?.toDestination(),
 }
 
-export const compile = (code: string): void => {
-    return new Function(
+export const compile = (code: string): { inputs: Record<string, any>, output: Gain } => {
+    inputs = {}
+    const output = new Function(
         ...Object.keys(library), 
         code
     )(...Object.values(library))
+    
+    return { inputs, output };
 }

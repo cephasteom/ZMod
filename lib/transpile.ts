@@ -20,7 +20,7 @@ export class Block {
     }
 
     toCode(block: Block, ref: string, args: any[], isLast: boolean = false): string {
-        return `${isLast ? 'return ' : `let ${ref} = `}${block.type}(${args.join(",")})`;
+        return `let ${ref} = ${block.type}(${args.join(",")})`;
     }
 
     compile() {
@@ -30,13 +30,11 @@ export class Block {
             : `v${blocks.indexOf(block)}`;
         let lines = [];
         for (let id in blocks) {
-            const isLast = id === String(blocks.length - 1);
             const block = blocks[id];
             const args = block.inputs.map(getRef);
             const ref = getRef(block);
-            lines.push(block.toCode(block, ref, args, isLast));
+            lines.push(block.toCode(block, ref, args));
         }
-        // TODO: why do we need to return the last block?
         const last = getRef(blocks[blocks.length - 1]);
         return { lines, last };
     }
@@ -45,8 +43,6 @@ export class Block {
 // 👇 Accepts both Blocks and numbers
 type BlockInput = Block | number;
 
-// Converts number inputs into "signal" Blocks
-// TODO: is this necessary?
 function toBlock(input: BlockInput): Block {
     return input instanceof Block ? input : new Block("value", [input as any]);
 }
@@ -75,12 +71,14 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
     yield block;
 }
 
+// Register the library as blocks
 const blocks = Object.keys(library)
     .reduce((acc, type) => {
         acc[type] = registerBlock(type);
         return acc;
     }, {} as Record<string, (...args: BlockInput[]) => Block>);
 
+// Transpile the Zen Blocks code into JavaScript
 export const transpile = (code: string): string => {
     try {
         const block = new Function(
@@ -89,8 +87,7 @@ export const transpile = (code: string): string => {
         )(...Object.values(blocks));
         
         const compiled = block.compile();
-        
-        return compiled.lines.join("\n");
+        return compiled.lines.join("\n") + `\nreturn ${compiled.last};`;
     } catch (error) {
         console.error("Error during transpilation:", error);
         return "";
