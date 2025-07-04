@@ -77,12 +77,61 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
     yield block;
 }
 
+/* ---------------------------------------------------------------- *\
+|*  withChildMethodLogging                                          *|
+|*  Wrap an API so that                                             *|
+|*    logged.fmOsc.in1(440)                                         *|
+|*  logs →  in1                                                     *|
+\* ---------------------------------------------------------------- */
+
+type AnyFn = (...args: any[]) => any;
+
+export function withChildMethodLogging<T extends object>(api: T): T {
+  // ── Handles *functions* (fmOsc, etc.) ────────────────────────────
+  const fnHandler: ProxyHandler<AnyFn> = {
+    // accessing   fmOsc.in1
+    get(fn, prop) {
+      // Preserve special/native props
+      if (typeof prop !== "string") return (fn as any)[prop];
+
+      // return a wrapper such that  fmOsc.in1(args…)  calls fmOsc(args…)
+      return (...args: any[]) => {
+        console.log(prop);            // ← log "in1", "foo", …
+        // Preserve `this` binding just in case
+        return fn.apply(this, args);
+      };
+    },
+  };
+
+  // ── Handles *everything else* (objects, nested modules, etc.) ────
+  const rootHandler: ProxyHandler<any> = {
+    get(target, prop, receiver) {
+      const value = Reflect.get(target, prop, receiver);
+
+      // Recursively wrap sub‑objects so   api.utils.fx.delay.tap()   also works
+      if (typeof value === "object" && value !== null) {
+        return new Proxy(value, rootHandler);
+      }
+
+      // Wrap every function so its child‑method calls are intercepted
+      if (typeof value === "function") {
+        return new Proxy(value, fnHandler);
+      }
+
+      // Primitives are returned as‑is
+      return value;
+    },
+  };
+
+  return new Proxy(api, rootHandler);
+}
+
 // Register the library (from tone.ts currently) as blocks
-const blockLibrary = Object.keys(library)
+const blockLibrary = withChildMethodLogging(Object.keys(library)
     .reduce((acc, type) => {
         acc[type] = registerBlock(type);
         return acc;
-    }, {} as Record<string, (...args: BlockInput[]) => Block>);
+    }, {} as Record<string, (...args: BlockInput[]) => Block>));
 
 // Transpile the Zen Blocks code into JavaScript
 export const transpile = (code: string): string => {
