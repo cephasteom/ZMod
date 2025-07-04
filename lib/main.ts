@@ -1,3 +1,5 @@
+// TODO: code should accept any string. If it's not a valid block, send back a signal and add to inputs
+
 import { transpile } from "./transpile.js";
 import { compile } from "./tone.js";
 import { Gain } from "tone";
@@ -22,11 +24,11 @@ const run = () => {
         graph && dispose(graph.output); // Fade out and dispose of previous graph if it exists
         graph = compile(code);
         // For testing
-        // setInterval(() => {
-        //     if(!graph) return 
-        //     const { inputs } = graph;
-        //     if(inputs.env) inputs.env.triggerAttackRelease(1); // Trigger envelope if it exists
-        // }, 2000); // Keep the graph alive
+        setInterval(() => {
+            if(!graph) return 
+            const { inputs } = graph;
+            if(inputs.env) inputs.env.triggerAttackRelease(1); // Trigger envelope if it exists
+        }, 2000); // Keep the graph alive
     } catch (error) {
         console.error("Error compiling code:", error);
     }

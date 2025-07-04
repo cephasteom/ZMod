@@ -3,8 +3,8 @@ import { library } from "./tone";
 
 /**
  * Block class representing a node in an audio graph.
- * This class allows for the creation of audio processing blocks with a type and inputs.
- * It provides methods to compile the block into a code representation that can be used in an audio processing context.
+ * Contains information about the block type and its inputs.
+ * Methods to transplile the block into Javascript code which is run to create an audio graph.
  */ 
 export class Block {
     type: string;
@@ -16,13 +16,19 @@ export class Block {
     ) {
         this.type = type;
         this.inputs = inputs;
-        
     }
 
-    toCode(block: Block, ref: string, args: any[], isLast: boolean = false): string {
+    /**
+     * Transpiles a single block into a single line of JavaScript code.
+     */
+    toCode(block: Block, ref: string, args: any[]): string {
         return `let ${ref} = ${block.type}(${args.join(",")})`;
     }
 
+    /**
+     * Compiles the block and its dependencies into a series of JavaScript lines.
+     * Returns an object containing the lines of code and the last reference.
+     */
     compile() {
         let blocks = Array.from(topoSort(this));
         const getRef = (block: Block) => typeof block !== "object" 
@@ -71,8 +77,8 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
     yield block;
 }
 
-// Register the library as blocks
-const blocks = Object.keys(library)
+// Register the library (from tone.ts currently) as blocks
+const blockLibrary = Object.keys(library)
     .reduce((acc, type) => {
         acc[type] = registerBlock(type);
         return acc;
@@ -82,9 +88,9 @@ const blocks = Object.keys(library)
 export const transpile = (code: string): string => {
     try {
         const block = new Function(
-            ...Object.keys(blocks), 
+            ...Object.keys(blockLibrary), 
             `return (${code});`
-        )(...Object.values(blocks));
+        )(...Object.values(blockLibrary));
         
         const compiled = block.compile();
         return compiled.lines.join("\n") + `\nreturn ${compiled.last};`;
