@@ -54,11 +54,12 @@ sine(sig.f(100)).mul(env.e(0.1,0.1,0.5,0.8))out(0)
 ```
 This will return the following:
 ```ts
-{
+const graph = {
     inputs: {
-        f: function(value: number, lag: number),
+        f: function(value: number, lag: number): void,
         e: function(a: number, d: number, s: number, r: number): void
     },
     ...
 }
 ```
+To trigger the envelope call `graph.inputs.e()`. To change the frequency call `graph.inputs.f( 200, 1000 )`.
