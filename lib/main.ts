@@ -27,6 +27,7 @@ const run = () => {
         setInterval(() => {
             if(!graph) return 
             const { inputs } = graph;
+            console.log(inputs)
             if(inputs.env) inputs.env.triggerAttackRelease(1); // Trigger envelope if it exists
         }, 2000); // Keep the graph alive
     } catch (error) {

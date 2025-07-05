@@ -89,10 +89,7 @@ export const library = {
     },
 
     env: (attack: number = 0.1, decay: number = 0.2, sustain: number = 0.5, release: number = 0.8): Envelope => {
-        const env = new Envelope({attack, decay, sustain, release});
-        // add to the inputs so it can be accessed later
-        inputs['env'] = env;
-        return env
+        return new Envelope({attack, decay, sustain, release});
     },
 
     mul: (
@@ -117,11 +114,8 @@ export const library = {
 }
 
 export const compile = (code: string): { inputs: Record<string, any>, output: Gain } => {
-    inputs = {}
-    const output = new Function(
+    return new Function(
         ...Object.keys(library), 
         code
     )(...Object.values(library))
-    
-    return { inputs, output };
 }

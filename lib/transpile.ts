@@ -9,20 +9,27 @@ import { library } from "./tone";
 export class Block {
     type: string;
     inputs: Block[];
+    id?: string; // Optional identifier for the block, useful for debugging or referencing
     
     constructor(
         type: string, 
-        inputs: Block[] = []
+        inputs: Block[] = [],
+        id?: string // Optional identifier for the block, useful for debugging or referencing
     ) {
         this.type = type;
         this.inputs = inputs;
+        this.id = id;
     }
 
     /**
      * Transpiles a single block into a single line of JavaScript code.
      */
-    toCode(block: Block, ref: string, args: any[]): string {
-        return `let ${ref} = ${block.type}(${args.join(",")})`;
+    toCode(block: Block, ref: string, args: any[], id?: string): string {
+        let code = `let ${ref} = ${block.type}(${args.join(",")});`;
+        if (id) {
+            code += ` inputs = {...inputs, ${id}: ${ref}};`; // Add to inputs object if id is provided
+        }
+        return code;
     }
 
     /**
@@ -35,14 +42,17 @@ export class Block {
             ? block 
             : `v${blocks.indexOf(block)}`;
         let lines = [];
-        for (let id in blocks) {
-            const block = blocks[id];
+        for (let i in blocks) {
+            const block = blocks[i];
             const args = block.inputs.map(getRef);
             const ref = getRef(block);
-            lines.push(block.toCode(block, ref, args));
+            lines.push(block.toCode(block, ref, args, block.id));
         }
         const last = getRef(blocks[blocks.length - 1]);
-        return { lines, last };
+        return { 
+            lines, 
+            last 
+        };
     }
 }
 
@@ -54,11 +64,11 @@ function toBlock(input: BlockInput): Block {
 }
 
 // 👇 Dynamically adds a method to Block.prototype
-const registerBlock = (type: string): (...args: BlockInput[]) => Block => {
-    (Block.prototype as any)[type] = function (this: Block, ...args: BlockInput[]): Block {
-        return new Block(type, [this, ...args].map(toBlock));
+const registerBlock = (type: string): (id: string, ...args: BlockInput[]) => Block => {
+    (Block.prototype as any)[type] = function (this: Block, id: string, ...args: BlockInput[]): Block {
+        return new Block(type, [this, ...args].map(toBlock), id);
     };
-    return (...args: BlockInput[]) => new Block(type, args.map(toBlock));
+    return (id: string, ...args: BlockInput[]) => new Block(type, args.map(toBlock), id);
 };
 
 // sort blocks by dependencies (using generator function to be able to step through)
@@ -76,52 +86,48 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
     yield block;
 }
 
-// /** 
-// |*  passChildMethodNames                                         
-// |*  Wrap an API so that                                          
-// |*    logged.fmOsc.in1(440)                                      
-// |*  passes calls fmOsc, passing "in1" as the first argument
-// */
+type AnyFn = (...args: any[]) => any;
+export function parsePropAsId<T extends object>(api: T): T {
+    // ── Handles *functions* (fmOsc, etc.) ────────────────────────────
+    const fnHandler: ProxyHandler<AnyFn> = {
+        // being called directly as a function, e.g. fmOsc(440)
+        apply(fn, thisArg, args) {
+            // pass an id of null, as we don't need to expose it to external control
+            return fn.apply(thisArg, [null, ...args]);
+        },
 
-// type AnyFn = (...args: any[]) => any;
+        // called with a child method, e.g. fmOsc.in1(440)
+        get(fn, id) {
+            console.log(id)
+            return (...args: any[]) => {
+                // use the child method as the id, call the parent function
+                return fn.apply(this, [id, ...args]);
+            };
+        },
+    };
 
-// export function passChildMethodNames<T extends object>(api: T): T {
-//   // ── Handles *functions* (fmOsc, etc.) ────────────────────────────
-//   const fnHandler: ProxyHandler<AnyFn> = {
-//     // accessing   fmOsc.in1
-//     get(fn, prop) {
-//       // return a wrapper such that  fmOsc.in1(args…)  calls fmOsc(args…)
-//       return (...args: any[]) => {
-//         console.log(this, prop, args, fn);            // ← log "in1", "foo", …
-//         // Preserve `this` binding just in case
-//         return fn.apply(this, [...args, prop]);
-//       };
-//     },
-//   };
+    // ── Handles *everything else* (objects, nested modules, etc.) ────
+    const rootHandler: ProxyHandler<any> = {
+        get(target, prop, receiver) {
+        const value = Reflect.get(target, prop, receiver);
 
-//   // ── Handles *everything else* (objects, nested modules, etc.) ────
-//   const rootHandler: ProxyHandler<any> = {
-//     get(target, prop, receiver) {
-//       const value = Reflect.get(target, prop, receiver);
+        // Wrap every function so its child‑method calls are intercepted
+        if (typeof value === "function") return new Proxy(value, fnHandler);
 
-//       // Wrap every function so its child‑method calls are intercepted
-//       if (typeof value === "function") return new Proxy(value, fnHandler);
+        // Primitives are returned as‑is
+        return value;
+        },
+    };
 
-//       // Primitives are returned as‑is
-//       return value;
-//     },
-//   };
-
-//   return new Proxy(api, rootHandler);
-// }
+    return new Proxy(api, rootHandler);
+}
 
 // Register the library (from tone.ts currently) as blocks
-// TODO: change name of passChildMethodNames
-const blockLibrary = Object.keys(library)
+const blockLibrary = parsePropAsId(Object.keys(library)
     .reduce((acc, type) => {
         acc[type] = registerBlock(type);
         return acc;
-    }, {} as Record<string, (...args: BlockInput[]) => Block>);
+    }, {} as Record<string, (id: string, ...args: BlockInput[]) => Block>));
 
 // Transpile the Zen Blocks code into JavaScript
 export const transpile = (code: string): string => {
@@ -132,7 +138,7 @@ export const transpile = (code: string): string => {
         )(...Object.values(blockLibrary));
         
         const compiled = block.compile();
-        return compiled.lines.join("\n") + `\nreturn ${compiled.last};`;
+        return `let inputs = {};\n${compiled.lines.join("\n")}\nreturn {inputs, output: ${compiled.last}};`;
     } catch (error) {
         console.error("Error during transpilation:", error);
         return "";
