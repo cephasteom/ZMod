@@ -113,9 +113,21 @@ export const library = {
     out: (node: any) => node?.toDestination(),
 }
 
-export const compile = (code: string): { inputs: Record<string, any>, output: Gain } => {
-    return new Function(
+export interface Patch {
+    inputs: Record<string, Signal | Envelope>,
+    output: Gain,
+    dispose: () => void
+}
+export const compile = (code: string): Patch => {
+    const result = new Function(
         ...Object.keys(library), 
         code
     )(...Object.values(library))
+    return {
+        ...result,
+        dispose: () => {
+            result.output?.gain?.rampTo(0, 0.1); // Fade out volume
+            setTimeout(() => result.output?.dispose?.(), 1000); // Allow time for fade out
+        }
+    }
 }

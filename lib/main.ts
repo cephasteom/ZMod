@@ -1,43 +1,38 @@
 // TODO: code should accept any string. If it's not a valid block, send back a signal and add to inputs
 
 import { transpile } from "./transpile.js";
-import { compile } from "./tone.js";
-import { Gain } from "tone";
+import { compile, type Patch } from "./tone.js";
 
-let graph: { inputs: Record<string, any>, output: Gain } | null;
+let patch: Patch | null = null;
 let lastTranspiledCode: string = ''
 
 const runButton = document.getElementById("run");
 const stopButton = document.getElementById("stop");
 const codeInput = document.getElementById("code") as HTMLTextAreaElement;
 
-const dispose = (output: Gain) => {
-    output?.gain?.rampTo(0, 0.1); // Fade out volume
-    setTimeout(() => output?.dispose?.(), 1000); // Allow time for fade out
-}
-
 const run = () => {
     try {
         const code = transpile(codeInput.value);
         if (code === lastTranspiledCode) return;
         lastTranspiledCode = code;
-        graph && dispose(graph.output); // Fade out and dispose of previous graph if it exists
-        graph = compile(code);
+        patch && patch.dispose(); // Dispose of the previous patch if it exists
+        patch = compile(code);
+        console.log(patch)
         // For testing
         setInterval(() => {
-            if(!graph) return 
-            const { inputs } = graph;
-            console.log(inputs)
-            if(inputs.env) inputs.env.triggerAttackRelease(1); // Trigger envelope if it exists
-        }, 2000); // Keep the graph alive
+            if(!patch) return 
+            const { inputs } = patch;
+            if(inputs.f) inputs.f.value = 220; inputs.f.rampTo(440, 1); // Ramp frequency if it exists
+            if(inputs.e) inputs.e.triggerAttackRelease(1); // Trigger envelope if it exists
+        }, 2000); // Keep the patch alive
     } catch (error) {
         console.error("Error compiling code:", error);
     }
 }
 
 const stop = () => {
-    graph && dispose(graph.output)
-    graph = null; // Clear the graph reference
+    patch && patch.dispose(); // Dispose of the current patch if it exists
+    patch = null; // Clear the graph reference
     lastTranspiledCode = ''; // Reset the last transpiled code
 }
 

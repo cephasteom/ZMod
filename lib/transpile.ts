@@ -64,11 +64,17 @@ function toBlock(input: BlockInput): Block {
 }
 
 // 👇 Dynamically adds a method to Block.prototype
-const registerBlock = (type: string): (id: string, ...args: BlockInput[]) => Block => {
-    (Block.prototype as any)[type] = function (this: Block, id: string, ...args: BlockInput[]): Block {
+const registerBlock = (type: string): (...args: any[]) => Block => {
+    (Block.prototype as any)[type] = function (this: Block, ...args: any[]): Block {
+        const id = typeof args[0] === 'string' ? args[0] : undefined; // Extract id if first arg is a Block
+        if (id) args.shift(); // Remove id from args if it exists
         return new Block(type, [this, ...args].map(toBlock), id);
     };
-    return (id: string, ...args: BlockInput[]) => new Block(type, args.map(toBlock), id);
+    return (...args: any[]) => {
+        const id = typeof args[0] === 'string' ? args[0] : undefined; // Extract id if first arg is a Block
+        if (id) args.shift(); // Remove id from args if it exists
+        return new Block(type, args.map(toBlock), id);
+    }
 };
 
 // sort blocks by dependencies (using generator function to be able to step through)
@@ -86,48 +92,11 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
     yield block;
 }
 
-type AnyFn = (...args: any[]) => any;
-export function parsePropAsId<T extends object>(api: T): T {
-    // ── Handles *functions* (fmOsc, etc.) ────────────────────────────
-    const fnHandler: ProxyHandler<AnyFn> = {
-        // being called directly as a function, e.g. fmOsc(440)
-        apply(fn, thisArg, args) {
-            // pass an id of null, as we don't need to expose it to external control
-            return fn.apply(thisArg, [null, ...args]);
-        },
-
-        // called with a child method, e.g. fmOsc.in1(440)
-        get(fn, id) {
-            console.log(id)
-            return (...args: any[]) => {
-                // use the child method as the id, call the parent function
-                return fn.apply(this, [id, ...args]);
-            };
-        },
-    };
-
-    // ── Handles *everything else* (objects, nested modules, etc.) ────
-    const rootHandler: ProxyHandler<any> = {
-        get(target, prop, receiver) {
-        const value = Reflect.get(target, prop, receiver);
-
-        // Wrap every function so its child‑method calls are intercepted
-        if (typeof value === "function") return new Proxy(value, fnHandler);
-
-        // Primitives are returned as‑is
-        return value;
-        },
-    };
-
-    return new Proxy(api, rootHandler);
-}
-
-// Register the library (from tone.ts currently) as blocks
-const blockLibrary = parsePropAsId(Object.keys(library)
+const blockLibrary = Object.keys(library)
     .reduce((acc, type) => {
         acc[type] = registerBlock(type);
         return acc;
-    }, {} as Record<string, (id: string, ...args: BlockInput[]) => Block>));
+    }, {} as Record<string, (id: string, ...args: BlockInput[]) => Block>);
 
 // Transpile the Zen Blocks code into JavaScript
 export const transpile = (code: string): string => {

@@ -5,7 +5,7 @@
 const zm = new ZenModular(context)
 
 // set patch
-zm.patch(`sine(sig.f(100)).mul(env.e(0.1,0.1,0.5,0.8)).out(0)`)
+zm.patch(`sine(sig('f',100)).mul(env('e',0.1,0.1,0.5,0.8)).out(0)`)
 zm.compile() // clear previous patch and generate new one
 
 // get patch - underlying audio graph
@@ -19,6 +19,14 @@ zm.inputs.f(1000, 1000) // ramp frequency to 1000Hz over 1s
 zm.patch.dispose()
 ```
 ## Syntax
+For all nodes, pass letter(s) as first argument to expose the node for external control.
+
+E.g. 
+```js
+sine(sig(100)) // sets sine to 100
+sine(sig('f', 100)) // sets sine to 100 and exposes the signal under input.f
+```
+
 ### Inputs
 ```ts
 type Input = number | Signal | LFO | Envelope;

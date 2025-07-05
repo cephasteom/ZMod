@@ -22,7 +22,7 @@
 <body>
 <h1>Zen Blocks</h1>
 <textarea id="code" rows="10" cols="50">
-sinOsc(220).out()
+sinOsc(sig('f',220)).mul(env('e')).out()
 </textarea>
 <button id="run">Run</button>
 <button id="stop">Stop</button>
