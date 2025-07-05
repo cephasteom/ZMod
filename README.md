@@ -1,22 +1,40 @@
-# Zen Blocks
+# Zen Modular
 
+## Basic Use
+```js
+const zm = new ZenModular(context)
+
+// set patch
+zm.patch(`sine(sig.f(100)).mul(env.e(0.1,0.1,0.5,0.8)).out(0)`)
+zm.compile() // clear previous patch and generate new one
+
+// get patch - underlying audio graph
+// console.log(zm.patch)
+
+// interact with patch
+zm.inputs.e() // trigger envelope
+zm.inputs.f(1000, 1000) // ramp frequency to 1000Hz over 1s
+
+// clear all 
+zm.patch.dispose()
+```
 ## Syntax
 ### Inputs
 ```ts
 type Input = number | Signal | LFO | Envelope;
 ```
 ### Basic Oscillators
-#### sineOsc
+#### sinOsc
 ```ts
-function sineOsc(freq: Input, amp: Input)
+function sinOsc(freq: Input, amp: Input)
 ```
 #### triOsc
 ```ts
 function triOsc(freq: Input, amp: Input)
 ```
-#### squareOsc
+#### squOsc
 ```ts
-function squareOsc(freq: Input, amp: Input)
+function squOsc(freq: Input, amp: Input)
 ```
 #### sawOsc
 ```ts
@@ -50,7 +68,7 @@ function sig(value: number)
 ### External Control
 Adding `.<any>` at the end of any node name enables it to be controlled from outside of the audio graph.
 ```ts
-sine(sig.f(100)).mul(env.e(0.1,0.1,0.5,0.8))out(0)
+sine(sig.f(100)).mul(env.e(0.1,0.1,0.5,0.8)).out(0)
 ```
 This will return the following:
 ```ts

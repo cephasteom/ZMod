@@ -58,7 +58,6 @@ const registerBlock = (type: string): (...args: BlockInput[]) => Block => {
     (Block.prototype as any)[type] = function (this: Block, ...args: BlockInput[]): Block {
         return new Block(type, [this, ...args].map(toBlock));
     };
-
     return (...args: BlockInput[]) => new Block(type, args.map(toBlock));
 };
 
@@ -77,61 +76,52 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
     yield block;
 }
 
-/* ---------------------------------------------------------------- *\
-|*  withChildMethodLogging                                          *|
-|*  Wrap an API so that                                             *|
-|*    logged.fmOsc.in1(440)                                         *|
-|*  logs →  in1                                                     *|
-\* ---------------------------------------------------------------- */
+// /** 
+// |*  passChildMethodNames                                         
+// |*  Wrap an API so that                                          
+// |*    logged.fmOsc.in1(440)                                      
+// |*  passes calls fmOsc, passing "in1" as the first argument
+// */
 
-type AnyFn = (...args: any[]) => any;
+// type AnyFn = (...args: any[]) => any;
 
-export function withChildMethodLogging<T extends object>(api: T): T {
-  // ── Handles *functions* (fmOsc, etc.) ────────────────────────────
-  const fnHandler: ProxyHandler<AnyFn> = {
-    // accessing   fmOsc.in1
-    get(fn, prop) {
-      // Preserve special/native props
-      if (typeof prop !== "string") return (fn as any)[prop];
+// export function passChildMethodNames<T extends object>(api: T): T {
+//   // ── Handles *functions* (fmOsc, etc.) ────────────────────────────
+//   const fnHandler: ProxyHandler<AnyFn> = {
+//     // accessing   fmOsc.in1
+//     get(fn, prop) {
+//       // return a wrapper such that  fmOsc.in1(args…)  calls fmOsc(args…)
+//       return (...args: any[]) => {
+//         console.log(this, prop, args, fn);            // ← log "in1", "foo", …
+//         // Preserve `this` binding just in case
+//         return fn.apply(this, [...args, prop]);
+//       };
+//     },
+//   };
 
-      // return a wrapper such that  fmOsc.in1(args…)  calls fmOsc(args…)
-      return (...args: any[]) => {
-        console.log(prop);            // ← log "in1", "foo", …
-        // Preserve `this` binding just in case
-        return fn.apply(this, args);
-      };
-    },
-  };
+//   // ── Handles *everything else* (objects, nested modules, etc.) ────
+//   const rootHandler: ProxyHandler<any> = {
+//     get(target, prop, receiver) {
+//       const value = Reflect.get(target, prop, receiver);
 
-  // ── Handles *everything else* (objects, nested modules, etc.) ────
-  const rootHandler: ProxyHandler<any> = {
-    get(target, prop, receiver) {
-      const value = Reflect.get(target, prop, receiver);
+//       // Wrap every function so its child‑method calls are intercepted
+//       if (typeof value === "function") return new Proxy(value, fnHandler);
 
-      // Recursively wrap sub‑objects so   api.utils.fx.delay.tap()   also works
-      if (typeof value === "object" && value !== null) {
-        return new Proxy(value, rootHandler);
-      }
+//       // Primitives are returned as‑is
+//       return value;
+//     },
+//   };
 
-      // Wrap every function so its child‑method calls are intercepted
-      if (typeof value === "function") {
-        return new Proxy(value, fnHandler);
-      }
-
-      // Primitives are returned as‑is
-      return value;
-    },
-  };
-
-  return new Proxy(api, rootHandler);
-}
+//   return new Proxy(api, rootHandler);
+// }
 
 // Register the library (from tone.ts currently) as blocks
-const blockLibrary = withChildMethodLogging(Object.keys(library)
+// TODO: change name of passChildMethodNames
+const blockLibrary = Object.keys(library)
     .reduce((acc, type) => {
         acc[type] = registerBlock(type);
         return acc;
-    }, {} as Record<string, (...args: BlockInput[]) => Block>));
+    }, {} as Record<string, (...args: BlockInput[]) => Block>);
 
 // Transpile the Zen Blocks code into JavaScript
 export const transpile = (code: string): string => {

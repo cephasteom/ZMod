@@ -54,7 +54,7 @@ export const library = {
     // Base Oscillators
     ...Object.fromEntries(['sine', 'triangle', 'square', 'sawtooth']
         .map(type => [
-            `${type}Osc`,
+            `${type.slice(0,3)}Osc`,
             (freq: Input) => makeOsc(type as ToneOscillatorType, freq)
         ])),
     
