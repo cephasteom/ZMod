@@ -47,26 +47,26 @@ export const library: Record<string, (...args: any[]) => any> = {
     // Base Oscillators
     ...Object.fromEntries(['sine', 'triangle', 'square', 'sawtooth']
         .map(type => [
-            `${type.slice(0,3)}Osc`,
+            ['triangle', 'sawtooth'].includes(type) ? `${type.slice(0,3)}` : type,
             (freq: Input) => makeOsc(type as ToneOscillatorType, freq)
         ])),
     
     // Complex Oscillators
-    fmOsc: (...args: Input[]): Gain => {
+    fm: (...args: Input[]): Gain => {
         const fmOsc = new FMOscillator(220, 'sine', 'sine').start();
         ['frequency', 'harmonicity', 'modulationIndex'].forEach((param, index) => {
             assignOrConnect((fmOsc as any)[param], args[index])
         })
         return makeOutput(fmOsc)
     },
-    amOsc: (...args: Input[]): Gain => {
+    am: (...args: Input[]): Gain => {
         const amOsc = new AMOscillator(220, 'sine', 'sine').start();
         ['frequency', 'harmonicity'].forEach((param, index) => {
             assignOrConnect((amOsc as any)[param], args[index])
         })
         return makeOutput(amOsc)
     },
-    pwmOsc: (...args: Input[]): Gain => {
+    pwm: (...args: Input[]): Gain => {
         const pwmOsc = new PWMOscillator(220, 0.5).start();
         ['frequency', 'modulationFrequency'].forEach((param, index) => {
             assignOrConnect((pwmOsc as any)[param], args[index])

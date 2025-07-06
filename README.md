@@ -35,35 +35,35 @@ sine(100).mul(env(e)) // for convenience, you can also drop the ''
 type Input = number | Signal | LFO | Envelope;
 ```
 ### Basic Oscillators
-#### sinOsc
+#### sine
 ```ts
-function sinOsc(freq: Input, amp: Input)
+function sine(freq: Input, amp: Input)
 ```
-#### triOsc
+#### tri
 ```ts
-function triOsc(freq: Input, amp: Input)
+function tri(freq: Input, amp: Input)
 ```
-#### squOsc
+#### square
 ```ts
-function squOsc(freq: Input, amp: Input)
+function square(freq: Input, amp: Input)
 ```
-#### sawOsc
+#### saw
 ```ts
-function sawOsc(freq: Input, amp: Input)
+function saw(freq: Input, amp: Input)
 ```
 
 ### Complex Oscillators
-#### fmOsc
+#### fm
 ```ts
-function fmOsc(frequency: Input, harmonicity: Input, modulationIndex: Input)
+function fm(frequency: Input, harmonicity: Input, modulationIndex: Input)
 ```
-#### amOsc
+#### am
 ```ts
-function amOsc(frequency: Input, harmonicity: Input)
+function am(frequency: Input, harmonicity: Input)
 ```
-#### pwmOsc
+#### pwm
 ```ts
-function amOsc(frequency: Input, modulationIndex: Input)
+function pwm(frequency: Input, modulationIndex: Input)
 ```
 
 ### LFO
@@ -77,18 +77,7 @@ function sig(value: number)
 ```
 
 ### External Control
-Adding `.<any>` at the end of any node name enables it to be controlled from outside of the audio graph.
+If you pass a string as the first argument, the node can be controlled externally via the inputs object.
 ```ts
-sine(sig.f(100)).mul(env.e(0.1,0.1,0.5,0.8)).out(0)
+sine(sig('f')).mul(env('e',0.1,0.1,0.5,0.8)).out(0)
 ```
-This will return the following:
-```ts
-const graph = {
-    inputs: {
-        f: function(value: number, lag: number): void,
-        e: function(a: number, d: number, s: number, r: number): void
-    },
-    ...
-}
-```
-To trigger the envelope call `graph.inputs.e()`. To change the frequency call `graph.inputs.f( 200, 1000 )`.
