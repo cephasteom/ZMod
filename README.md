@@ -5,7 +5,7 @@
 const zm = new ZenModular()
 
 // pass a line of the Zen Modular scripting language
-zm.set(`sine(sig('f',100)).mul(env('e',0.1,0.1,0.5,0.8)).out(0)`)
+zm.set(`sine(sig(100)).mul(env(0.1,0.1,0.5,0.8)).out(0)`)
 // start the patch
 zm.start()
 // clear patch and dispose of all resources
@@ -65,15 +65,4 @@ function lfo(freq: Input, min: number, max: number)
 ### Signal
 ```ts
 function sig(value: number)
-```
-
-### External Control
-If you pass a string as the first argument, the node can be controlled externally via the inputs object. E.g
-```ts
-sine(sig(100)) // sets sine to 100, but you can't control it later.
-sine(sig('f', 100)) // sets sine to 100 and exposes the signal under zm.inputs.f
-sine(sig(f, 100)) // you can also drop the quotes for brevity
-
-sine(100).mul(env('e')) // creates an envelope and exposes it under zm.inputs.e
-sine(100).mul(env(e)) // for convenience, you can also drop the ''
 ```
