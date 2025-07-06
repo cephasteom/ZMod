@@ -2,27 +2,27 @@
 
 ## Basic Use
 ```js
-const zm = new ZMod()
+const ZM = new ZMod()
 
 // pass a line of the Zen Modular scripting language
-zm.set(`sine(sig(100)).mul(env(0.1,0.1,0.5,0.8)).out(0)`)
+ZM.set(`sine(sig(100)).mul(env(0.1,0.1,0.5,0.8)).out(0)`)
 // start the patch
-zm.start()
+ZM.start()
 // clear patch and dispose of all resources
-zm.clear()
+ZM.clear()
 
 // optionally, pass a string (with or without quotes) as the first argument of a node
-zm.set(`sine(sig(freq)).mul(env(e)).out(0)`)
+ZM.set(`sine(sig(freq)).mul(env(e)).out(0)`)
 // making the node controllable from outside the patch
-console.log(zm.inputs)
+console.log(ZM.inputs)
 // returns {e: ƒ(), freq: ƒ()}
 
 // interact with patch whilst it is running
-zm.inputs.e() // trigger envelope
-zm.inputs.f(1000, 1000) // ramp frequency to 1000Hz over 1s
+ZM.inputs.e() // trigger envelope
+ZM.inputs.f(1000, 1000) // ramp frequency to 1000Hz over 1s
 
 // clear patch and dispose of all resources
-zm.clear()
+ZM.clear()
 ```
 ## Syntax
 ### Basic Oscillators
