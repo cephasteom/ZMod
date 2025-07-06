@@ -6,7 +6,7 @@ const codeInput = document.getElementById("code") as HTMLTextAreaElement;
 
 const zm = new ZenModular()
 
-const start = () => zm.parse(codeInput.value).start()
+const start = () => zm.set(codeInput.value).start()
 const stop = () => zm.clear()
 
 runButton?.addEventListener("click", start);

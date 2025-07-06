@@ -62,15 +62,27 @@ export class ZenModular {
             }, {} as Record<string, (id: string, ...args: NodeInput[]) => Node>);
     }
 
+    private parseCode(code: string): string {
+        // delete any ;
+        code = code.replace(/;/g, '');
+        // wrap any non-numeric function arguments in quotes. These will either be between ( and ) or ( and ,. Ignore any arguments that are numbers or functions.
+        code = code.replace(/(\(|,)([a-zA-Z_][a-zA-Z0-9_]*)(?=\)|,)/g, (match, p1, p2) => {
+            // If the argument is a string or a variable name, wrap it in quotes
+            return `${p1}'${p2}'`;
+        });
+        console.log(code)
+        return code;
+    }
+
     /**
-     * @param code Zen Modular code to transpile into JavaScript.
+     * @param code Set Zen Modular code to be transpiled into JavaScript.
      * Transpiles the code into a series of JavaScript lines that can be executed to create an audio graph.
      */
-    parse(code: string): ZenModular {
+    set(code: string): ZenModular {
         try {
             const nodes = new Function(
                 ...Object.keys(this.nodes), 
-                `return (${code});`
+                `return (${this.parseCode(code)});`
             )(...Object.values(this.nodes));
             
             const script = nodes.toScript();
