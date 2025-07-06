@@ -2,21 +2,18 @@
 
 ## Basic Use
 ```js
-const zm = new ZenModular(context)
+const zm = new ZenModular()
 
 // set patch
-zm.parse(`sine(sig('f',100)).mul(env('e',0.1,0.1,0.5,0.8)).out(0)`)
+zm.set(`sine(sig('f',100)).mul(env('e',0.1,0.1,0.5,0.8)).out(0)`)
   .start() // clear previous patch and generate new one
 
-// get patch - underlying audio graph
-// console.log(zm.patch)
-
-// interact with patch
+// interact with patch whilst it is running
 zm.inputs.e() // trigger envelope
 zm.inputs.f(1000, 1000) // ramp frequency to 1000Hz over 1s
 
 // clear patch and dispose of all resources
-zm.patch.clear()
+zm.clear()
 ```
 ## Syntax
 For all nodes, if you pass a string as the first argument, the node can be controlled externally via the inputs object. For convenience
