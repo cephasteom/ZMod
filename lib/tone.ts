@@ -39,13 +39,6 @@ function assignOrConnect(target: Signal<any> | Param<any>, value: Input) {
         : (target as Signal | AudioParam).value = value;
 }
 
-/**
- * TODO: maybe this should be a class?
- * This is a collection of inputs that are exposed by the compiled code.
- * It allows you to interact with the audio graph from outside the code.
- */
-let inputs: Record<string, Signal | Envelope> = {}
-
 // LIBRARY
 export const library: Record<string, (...args: any[]) => any> = {
     value: (val: number) => val,

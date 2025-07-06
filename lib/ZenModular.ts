@@ -1,12 +1,44 @@
-// TODO: Thanks to froos
 import { library, type Patch } from "./tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 
+/**
+ * ZenModular class that represents a modular audio synthesis environment.
+ * It allows you to create and manipulate audio graphs using a custom scripting language.
+ * 
+ * @example
+ * const zm = new ZenModular();
+ * zm.parse("sinOsc(lfo(0.5,50,500)).out()");
+ * zm.start();
+ * 
+ * zm.stop();
+ */
 export class ZenModular {
+    
+    /**
+     * AudioContext to use. Currently not used, but there for future compatibility.
+     */
     context?: AudioContext;
+    
+    /**
+     * A collection of Nodes that can be used in the ZenModular environment.
+     * These are dynamically registered from a provided library - meaning we can change synth engine in future.
+     */
     nodes: Record<string, (id: string, ...args: NodeInput[]) => Node> = {};
+    
+    /**
+     * The ZenModular scripting language transpiled to JavaScript.
+     */ 
     transpiledCode: string = '';
+    
+    /**
+     * The current audio patch created from the transpiled code.
+     * Contains the inputs and output of the audio graph, and a dispose method to clean up resources.
+     */
     patch?: Patch | null;
+    
+    /**
+     * Flag to indicate if the current patch is new or has changed since the last run.
+     */
     isNewPatch: boolean = false;
 
     constructor(context?: AudioContext) {
@@ -17,6 +49,11 @@ export class ZenModular {
         this.loadNodes(library)
     }
 
+    /**
+     * A library of Nodes - oscillators, filters, etc. that can be used in the ZenModular environment.
+     * This method registers the Nodes from the provided library
+     * @param library 
+     */
     loadNodes(library: Record<string, (...args: any[]) => Node>) {
         this.nodes = Object.keys(library)
             .reduce((acc, type) => {
@@ -29,26 +66,31 @@ export class ZenModular {
      * @param code Zen Modular code to transpile into JavaScript.
      * Transpiles the code into a series of JavaScript lines that can be executed to create an audio graph.
      */
-    parse(code: string) {
+    parse(code: string): ZenModular {
         try {
             const nodes = new Function(
                 ...Object.keys(this.nodes), 
                 `return (${code});`
             )(...Object.values(this.nodes));
             
-            const compiled = nodes.compile();
-            const transpiled = `let inputs = {};\n${compiled.lines.join("\n")}\nreturn {inputs, output: ${compiled.last}};`;
+            const script = nodes.toScript();
+            const transpiled = `let inputs = {};\n${script.lines.join("\n")}\nreturn {inputs, output: ${script.last}};`;
 
             this.isNewPatch = (transpiled !== this.transpiledCode);
             this.transpiledCode = transpiled;
         } catch (error) {
             console.error("Error during transpilation:", error);
         }
+
+        return this
     }
 
-    start() {
+    /**
+     * Build the audio graph from the transpiled code and start it.
+     */
+    start(): ZenModular {
         // Don't create a new patch if the code hasn't changed
-        if(!this.isNewPatch || !this.transpiledCode) return;
+        if(!this.isNewPatch || !this.transpiledCode) return this
         
         try {
             this.patch?.dispose();
@@ -68,14 +110,14 @@ export class ZenModular {
         } catch (error) {
             console.error("Error compiling code:", error);
         }
+
+        return this
     }
 
-    stop() {
-        this.patch?.dispose(); // Dispose of the current patch if it exists
-        this.patch = null; // Clear the graph reference
-        this.isNewPatch = true; // Reset the new patch flag so that we can play the same code again
-    }
-
+    /**
+     * Clears the current audio patch and resets the state.
+     * You need to parse more code before you can run it again.
+     */
     clear() {
         this.patch?.dispose(); // Dispose of the current patch if it exists
         this.patch = null; // Clear the graph reference

@@ -5,6 +5,7 @@ export type NodeInput = Node | number;
  * Node class representing a node in an audio graph.
  * Contains information about the Node type and its inputs.
  * Methods to transplile the Node into Javascript code which is run to create an audio graph.
+ * Thanks to @froos for the inspiration and initial implementation. See https://garten.salat.dev/kabelsalat/graph-computation.html.
  */ 
 export class Node {
     type: string;
@@ -22,7 +23,7 @@ export class Node {
     }
 
     /**
-     * Transpiles a single Node into a single line of JavaScript code.
+     * Transpiles a single Node into a line of JavaScript code.
      */
     toCode(node: Node, ref: string, args: any[], id?: string): string {
         let code = `let ${ref} = ${node.type}(${args.join(",")});`;
@@ -36,7 +37,7 @@ export class Node {
      * Compiles the Node and its dependencies into a series of JavaScript lines.
      * Returns an object containing the lines of code and the last reference.
      */
-    compile() {
+    toScript() {
         let nodes = Array.from(topoSort(this));
         const getRef = (node: Node) => typeof node !== "object" 
             ? node 
