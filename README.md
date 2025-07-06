@@ -1,8 +1,8 @@
-# Zen Modular
+# ZMod
 
 ## Basic Use
 ```js
-const zm = new ZenModular()
+const zm = new ZMod()
 
 // pass a line of the Zen Modular scripting language
 zm.set(`sine(sig(100)).mul(env(0.1,0.1,0.5,0.8)).out(0)`)

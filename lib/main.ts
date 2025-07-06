@@ -1,10 +1,10 @@
-import { ZenModular } from "./ZenModular";
+import ZMod from "./ZMod";
 
 const runButton = document.getElementById("start");
 const stopButton = document.getElementById("stop");
 const codeInput = document.getElementById("code") as HTMLTextAreaElement;
 
-const zm = new ZenModular()
+const zm = new ZMod()
 
 const start = () => zm.set(codeInput.value).start().inputs
 const stop = () => zm.clear()

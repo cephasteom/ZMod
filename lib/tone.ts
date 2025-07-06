@@ -1,3 +1,7 @@
+// TODO: add more nodes
+// TODO: replace the nodes exposed as inputs with functions that control them. This will depend on what type of node they are.
+// E.g. for an _Envelope type, e() should trigger it, and e(0.1, 0.2, 0.5, 0.8) should set the attack, decay, sustain, and release times.
+
 import { 
     Merge, 
     Signal, Param,

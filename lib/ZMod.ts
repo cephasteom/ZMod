@@ -12,7 +12,7 @@ import { Node, type NodeInput, registerNode } from "./Node";
  * 
  * zm.stop();
  */
-export class ZenModular {
+export default class ZMod {
     
     /**
      * AudioContext to use. Currently not used, but there for future compatibility.
