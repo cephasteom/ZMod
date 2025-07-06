@@ -114,10 +114,11 @@ export const library = {
 }
 
 export interface Patch {
-    inputs: Record<string, Signal | Envelope>,
+    inputs: Record<string, Signal | Param | Envelope>,
     output: Gain,
     dispose: () => void
 }
+
 export const compile = (code: string): Patch => {
     const result = new Function(
         ...Object.keys(library), 
