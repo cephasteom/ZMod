@@ -62,6 +62,13 @@ export class ZenModular {
             }, {} as Record<string, (id: string, ...args: NodeInput[]) => Node>);
     }
 
+    /**
+     * Parses the Zen Modular code and prepares it for transpilation.
+     * This method modifies the code to ensure it is in a format that can be executed as JavaScript.
+     * 
+     * @param code The Zen Modular code to parse.
+     * @returns The parsed code ready for transpilation.
+     */
     private parseCode(code: string): string {
         // delete any ;
         code = code.replace(/;/g, '');
@@ -70,7 +77,6 @@ export class ZenModular {
             // If the argument is a string or a variable name, wrap it in quotes
             return `${p1}'${p2}'`;
         });
-        console.log(code)
         return code;
     }
 
@@ -95,6 +101,14 @@ export class ZenModular {
         }
 
         return this
+    }
+
+    /**
+     * Get the inputs of the current patch.
+     * These are the controllable parameters of the audio graph.
+     */
+    get inputs() {
+        return this.patch?.inputs || {};
     }
 
     /**

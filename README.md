@@ -6,7 +6,16 @@ const zm = new ZenModular()
 
 // pass a line of the Zen Modular scripting language
 zm.set(`sine(sig('f',100)).mul(env('e',0.1,0.1,0.5,0.8)).out(0)`)
-  .start()
+// start the patch
+zm.start()
+// clear patch and dispose of all resources
+zm.clear()
+
+// optionally, pass a string (with or without quotes) as the first argument of a node
+zm.set(`sine(sig(freq)).mul(env(e)).out(0)`)
+// making the node controllable from outside the patch
+console.log(zm.inputs)
+// returns {e: ƒ(), freq: ƒ()}
 
 // interact with patch whilst it is running
 zm.inputs.e() // trigger envelope
