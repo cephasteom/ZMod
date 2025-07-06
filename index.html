@@ -2,29 +2,40 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <title>Zen Blocks</title>
+    <title>ZenModular</title>
     <script type="module" src="./lib/main.js"></script>
     <style>
         body {
-            /* font-family: Arial, sans-serif; */
             font-family: monospace;
-            margin: 20px;
+            margin: 2rem;
+            background-color: black;
+            color: white;
         }
         textarea {
-            width: 100%;
+            width: calc(100% - 2rem);
             font-family: monospace;
+            background-color: black;
+            border: 1px solid white;
+            color: white;
+            padding: 1rem;
+            border-radius: 5px;
         }
         button {
             margin-top: 10px;
+            background-color: black;
+            border: 1px solid white;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
-<h1>Zen Blocks</h1>
+<h1>ZenModular</h1>
 <textarea id="code" rows="10" cols="50">
 sinOsc(lfo(0.5,50,500)).out()
 </textarea>
-<button id="run">Run</button>
+<button id="start">Start</button>
 <button id="stop">Stop</button>
 </body>
 </html>
