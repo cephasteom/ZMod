@@ -1,10 +1,10 @@
 // TODO: Thanks to froos
 import { library, type Patch } from "./tone";
-import { Block, type BlockInput, registerBlock } from "./Block";
+import { Node, type NodeInput, registerNode } from "./Node";
 
 export class ZenModular {
     context?: AudioContext;
-    blocks: Record<string, (id: string, ...args: BlockInput[]) => Block> = {};
+    nodes: Record<string, (id: string, ...args: NodeInput[]) => Node> = {};
     transpiledCode: string = '';
     patch?: Patch | null;
     isNewPatch: boolean = false;
@@ -12,17 +12,17 @@ export class ZenModular {
     constructor(context?: AudioContext) {
         // TODO: use the context in the patch
         this.context = context;
-        // Load the library of blocks 
+        // Load the library of Nodes 
         // loaded internally so that we might swap out tone.js for another libary in future
-        this.loadBlocks(library)
+        this.loadNodes(library)
     }
 
-    loadBlocks(library: Record<string, (...args: any[]) => Block>) {
-        this.blocks = Object.keys(library)
-        .reduce((acc, type) => {
-            acc[type] = registerBlock(type);
-            return acc;
-        }, {} as Record<string, (id: string, ...args: BlockInput[]) => Block>);
+    loadNodes(library: Record<string, (...args: any[]) => Node>) {
+        this.nodes = Object.keys(library)
+            .reduce((acc, type) => {
+                acc[type] = registerNode(type);
+                return acc;
+            }, {} as Record<string, (id: string, ...args: NodeInput[]) => Node>);
     }
 
     /**
@@ -31,12 +31,12 @@ export class ZenModular {
      */
     parse(code: string) {
         try {
-            const block = new Function(
-                ...Object.keys(this.blocks), 
+            const nodes = new Function(
+                ...Object.keys(this.nodes), 
                 `return (${code});`
-            )(...Object.values(this.blocks));
+            )(...Object.values(this.nodes));
             
-            const compiled = block.compile();
+            const compiled = nodes.compile();
             const transpiled = `let inputs = {};\n${compiled.lines.join("\n")}\nreturn {inputs, output: ${compiled.last}};`;
 
             this.isNewPatch = (transpiled !== this.transpiledCode);
