@@ -47,7 +47,7 @@ function assignOrConnect(target: Signal<any> | Param<any>, value: Input) {
 let inputs: Record<string, Signal | Envelope> = {}
 
 // LIBRARY
-export const library = {
+export const library: Record<string, (...args: any[]) => any> = {
     value: (val: number) => val,
     sig: (value: number) => new Signal(value),
     

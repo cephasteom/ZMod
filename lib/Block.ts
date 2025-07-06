@@ -1,5 +1,5 @@
-// TODO: Thanks to froos
-import { library } from "./tone";
+// 👇 Accepts both Blocks and numbers
+export type BlockInput = Block | number;
 
 /**
  * Block class representing a node in an audio graph.
@@ -56,26 +56,9 @@ export class Block {
     }
 }
 
-// 👇 Accepts both Blocks and numbers
-type BlockInput = Block | number;
-
 function toBlock(input: BlockInput): Block {
     return input instanceof Block ? input : new Block("value", [input as any]);
 }
-
-// 👇 Dynamically adds a method to Block.prototype
-const registerBlock = (type: string): (...args: any[]) => Block => {
-    (Block.prototype as any)[type] = function (this: Block, ...args: any[]): Block {
-        const id = typeof args[0] === 'string' ? args[0] : undefined; // Extract id if first arg is a Block
-        if (id) args.shift(); // Remove id from args if it exists
-        return new Block(type, [this, ...args].map(toBlock), id);
-    };
-    return (...args: any[]) => {
-        const id = typeof args[0] === 'string' ? args[0] : undefined; // Extract id if first arg is a Block
-        if (id) args.shift(); // Remove id from args if it exists
-        return new Block(type, args.map(toBlock), id);
-    }
-};
 
 // sort blocks by dependencies (using generator function to be able to step through)
 function* topoSort(block: Block, visited = new Set()): Generator<Block> {
@@ -92,24 +75,16 @@ function* topoSort(block: Block, visited = new Set()): Generator<Block> {
     yield block;
 }
 
-const blockLibrary = Object.keys(library)
-    .reduce((acc, type) => {
-        acc[type] = registerBlock(type);
-        return acc;
-    }, {} as Record<string, (id: string, ...args: BlockInput[]) => Block>);
-
-// Transpile the Zen Blocks code into JavaScript
-export const transpile = (code: string): string => {
-    try {
-        const block = new Function(
-            ...Object.keys(blockLibrary), 
-            `return (${code});`
-        )(...Object.values(blockLibrary));
-        
-        const compiled = block.compile();
-        return `let inputs = {};\n${compiled.lines.join("\n")}\nreturn {inputs, output: ${compiled.last}};`;
-    } catch (error) {
-        console.error("Error during transpilation:", error);
-        return "";
+// 👇 Dynamically adds a method to Block.prototype
+export function registerBlock(type: string): (...args: any[]) => Block {
+    (Block.prototype as any)[type] = function (this: Block, ...args: any[]): Block {
+        const id = typeof args[0] === 'string' ? args[0] : undefined; // Extract id if first arg is a Block
+        if (id) args.shift(); // Remove id from args if it exists
+        return new Block(type, [this, ...args].map(toBlock), id);
+    };
+    return (...args: any[]) => {
+        const id = typeof args[0] === 'string' ? args[0] : undefined; // Extract id if first arg is a Block
+        if (id) args.shift(); // Remove id from args if it exists
+        return new Block(type, args.map(toBlock), id);
     }
-}
+};
