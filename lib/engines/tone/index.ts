@@ -1,3 +1,11 @@
+// TODO: FX: Chorus, Delay, Reverb, Distortion, Tremolo, Vibrato
+// TODO: FeedbackCombFilter
+// TODO: polyphony amp(env()).voices(4)?
+// TODO: signals and their methods...
+// TODO: AudioInput, AudioOutput - multichannel
+// TODO: External signals - how can plug in other streams to this one? Follower, etc.
+// TODO: ToneInstruments
+
 import { 
     Signal, Param,
     PulseOscillator,
