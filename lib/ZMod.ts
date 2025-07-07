@@ -2,11 +2,11 @@ import { library, type Patch } from "./tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 
 /**
- * ZenModular class that represents a modular audio synthesis environment.
+ * ZMod class that represents a modular audio synthesis environment.
  * It allows you to create and manipulate audio graphs using a custom scripting language.
  * 
  * @example
- * const zm = new ZenModular();
+ * const zm = new ZMod();
  * zm.parse("sinOsc(lfo(0.5,50,500)).out()");
  * zm.start();
  * 
@@ -20,13 +20,13 @@ export default class ZMod {
     context?: AudioContext;
     
     /**
-     * A collection of Nodes that can be used in the ZenModular environment.
+     * A collection of Nodes that can be used in the ZMod environment.
      * These are dynamically registered from a provided library - meaning we can change synth engine in future.
      */
     nodes: Record<string, (id: string, ...args: NodeInput[]) => Node> = {};
     
     /**
-     * The ZenModular scripting language transpiled to JavaScript.
+     * The ZMod scripting language transpiled to JavaScript.
      */ 
     transpiledCode: string = '';
     
@@ -50,7 +50,7 @@ export default class ZMod {
     }
 
     /**
-     * A library of Nodes - oscillators, filters, etc. that can be used in the ZenModular environment.
+     * A library of Nodes - oscillators, filters, etc. that can be used in the ZMod environment.
      * This method registers the Nodes from the provided library
      * @param library 
      */
@@ -84,7 +84,7 @@ export default class ZMod {
      * @param code Set Zen Modular code to be transpiled into JavaScript.
      * Transpiles the code into a series of JavaScript lines that can be executed to create an audio graph.
      */
-    set(code: string): ZenModular {
+    set(code: string): ZMod {
         try {
             const nodes = new Function(
                 ...Object.keys(this.nodes), 
@@ -114,7 +114,7 @@ export default class ZMod {
     /**
      * Build the audio graph from the transpiled code and start it.
      */
-    start(): ZenModular {
+    start(): ZMod {
         // Don't create a new patch if the code hasn't changed
         if(!this.isNewPatch || !this.transpiledCode) return this
         
@@ -125,6 +125,9 @@ export default class ZMod {
                 ...Object.keys(library), 
                 this.transpiledCode
             )(...Object.values(library))
+
+            // Fade in
+            result.output?.gain?.rampTo(1, 0.1);
             
             this.patch = {
                 ...result,

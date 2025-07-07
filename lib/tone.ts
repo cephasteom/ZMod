@@ -107,7 +107,11 @@ export const library: Record<string, (...args: any[]) => any> = {
         return node
     },
 
-    out: (node: any) => node?.toDestination(),
+    out: (node: Gain) => {
+        node.gain.value = 0; // Ensure initial volume is 0 - this will be faded in later
+        node.toDestination()
+        return node
+    },
 }
 
 export interface Patch {
