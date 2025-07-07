@@ -3,7 +3,8 @@ import {
     Signal, Param,
     getDestination,
     Oscillator, LFO,
-    FMOscillator, AMOscillator, PWMOscillator,
+    FMOscillator, AMOscillator, PWMOscillator, FatOscillator, PulseOscillator,
+    Noise,
     Limiter, Gain, Envelope,
     Filter,
     type ToneOscillatorType, type FilterRollOff
@@ -18,7 +19,7 @@ const allChannels = new Merge({channels: destination.maxChannelCount})
 allChannels.connect(destination)
 
 // Types
-type AudioSource = Oscillator | FMOscillator | AMOscillator | PWMOscillator | Gain | Filter;
+type AudioSource = Oscillator | FMOscillator | AMOscillator | PWMOscillator | PulseOscillator | FatOscillator | Noise | Gain | Filter;
 type ControlSource = number | Signal | LFO | Envelope
 export interface Patch {
     inputs: Record<string, (...args: any[]) => void>
@@ -36,6 +37,13 @@ function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSource)
 function toNumber(value: ControlSource): number {
     return typeof value === 'number' ? value : (value instanceof Signal ? value.value : 0);
 }   
+
+function toRolloff(value: ControlSource): FilterRollOff {
+    const rolloff = toNumber(value);
+    return [-12, -24, -48, -96].includes(rolloff)
+        ? rolloff as FilterRollOff
+        : -12; // Default to -12 if not a valid rolloff
+}
 
 function makeOsc(type: ToneOscillatorType, freq: ControlSource = 220): AudioSource {
     const osc = new Oscillator(220, type).start()
@@ -78,15 +86,25 @@ function makePwm(
     return pwmOsc;
 }
 
+function makeFat(
+    frequency: ControlSource = 220, 
+    spread: ControlSource = 10, // spread in cents
+    type: ToneOscillatorType = 'sine'
+): AudioSource {
+    const osc = new FatOscillator(220, type, toNumber(spread)).start();
+    assignOrConnect(osc.frequency, frequency);
+    return osc;
+}
+
 function makeFilter(
     node: AudioSource, 
     type: 'lowpass' | 'highpass' | 'bandpass' = 'lowpass',
     frequency: ControlSource = 1000, 
     q: ControlSource = 1,
-    rolloff: FilterRollOff = -12
+    rolloff: ControlSource = -12
 ): AudioSource {
     const filter = new Filter(1000, type);
-    filter.set({rolloff, Q: toNumber(q)});
+    filter.set({rolloff: toRolloff(rolloff), Q: toNumber(q)});
     assignOrConnect(filter.frequency, frequency);
     assignOrConnect(filter.Q, q);
     node.connect(filter);
@@ -95,11 +113,11 @@ function makeFilter(
 
 function makeLfo(
     type: ToneOscillatorType, 
-    frequency: ControlSource, 
-    min: number = 0, 
-    max: number = 1
+    frequency: ControlSource = 0.5, 
+    min: ControlSource = 0, 
+    max: ControlSource = 1
 ): ControlSource {
-    const lfo = new LFO({min, max, type}).start()
+    const lfo = new LFO({min: toNumber(min), max: toNumber(max), type}).start()
     assignOrConnect(lfo.frequency, frequency)
     return lfo
 }
@@ -109,25 +127,43 @@ export const library: Record<string, (...args: any[]) => any> = {
     value: (val: number) => val,
     
     // Signals
-    sig: (value: number) => new Signal(value),
+    sig: (value: number): Signal => new Signal(value),
 
-    
     // AudioSources
     sine: (freq: ControlSource = 220): AudioSource => makeOsc('sine', freq),
     tri: (freq: ControlSource = 220): AudioSource => makeOsc('triangle', freq),
     square: (freq: ControlSource = 220): AudioSource => makeOsc('square', freq),
     saw: (freq: ControlSource = 220): AudioSource => makeOsc('sawtooth', freq),
+    
     fm: (freq: ControlSource = 220, harm: ControlSource = 1, modi: ControlSource = 1): AudioSource => makeFm(freq, harm, modi),
     fmsine: (freq: ControlSource = 220, harm: ControlSource = 1, modi: ControlSource = 1): AudioSource => makeFm(freq, harm, modi, 'sine'),
     fmtri: (freq: ControlSource = 220, harm: ControlSource = 1, modi: ControlSource = 1): AudioSource => makeFm(freq, harm, modi, 'triangle'),
     fmsquare: (freq: ControlSource = 220, harm: ControlSource = 1, modi: ControlSource = 1): AudioSource => makeFm(freq, harm, modi, 'square'),
     fmsaw: (freq: ControlSource = 220, harm: ControlSource = 1, modi: ControlSource = 1): AudioSource => makeFm(freq, harm, modi, 'sawtooth'),
+    
     am: (freq: ControlSource = 220, harm: ControlSource = 1): AudioSource => makeAm(freq, harm),
     amsine: (freq: ControlSource = 220, harm: ControlSource = 1): AudioSource => makeAm(freq, harm, 'sine'),
     amtri: (freq: ControlSource = 220, harm: ControlSource = 1): AudioSource => makeAm(freq, harm, 'triangle'),
     amsquare: (freq: ControlSource = 220, harm: ControlSource = 1): AudioSource => makeAm(freq, harm, 'square'),
     amsaw: (freq: ControlSource = 220, harm: ControlSource = 1): AudioSource => makeAm(freq, harm, 'sawtooth'),
+    
+    pulse: (freq: ControlSource = 220, width: ControlSource = 0.5): AudioSource => {
+        const pulseOsc = new PulseOscillator(220, toNumber(width)).start();
+        assignOrConnect(pulseOsc.frequency, freq);
+        assignOrConnect(pulseOsc.width, width);
+        return pulseOsc;
+    },
     pwm: (freq: ControlSource = 220, modFreq: ControlSource = 0.5): AudioSource => makePwm(freq, modFreq),
+
+    fat: (freq: ControlSource = 220, spread: number = 10): AudioSource => makeFat(freq, spread),
+    fatsine: (freq: ControlSource = 220, spread: number = 10): AudioSource => makeFat(freq, spread, 'sine'),
+    fattri: (freq: ControlSource = 220, spread: number = 10): AudioSource => makeFat(freq, spread, 'triangle'),
+    fatsquare: (freq: ControlSource = 220, spread: number = 10): AudioSource => makeFat(freq, spread, 'square'),
+    fatsaw: (freq: ControlSource = 220, spread: number = 10): AudioSource => makeFat(freq, spread, 'sawtooth'),
+
+    white: (): AudioSource => new Noise('white').start(),
+    pink: (): AudioSource => new Noise('pink').start(),
+    brown: (): AudioSource => new Noise('brown').start(),        
     
     // ControlSources
     lfo: (frequency: ControlSource, min: number = 0, max: number = 1) : ControlSource => makeLfo('sine', frequency, min, max),
