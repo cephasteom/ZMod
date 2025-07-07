@@ -5,7 +5,8 @@ import {
     Oscillator, LFO,
     FMOscillator, AMOscillator, PWMOscillator,
     Limiter, Gain, Envelope,
-    type ToneOscillatorType
+    Filter,
+    type ToneOscillatorType, type FilterRollOff
 } from 'tone'
 
 // Setup
@@ -17,7 +18,7 @@ const allChannels = new Merge({channels: destination.maxChannelCount})
 allChannels.connect(destination)
 
 // Types
-type AudioSource = Oscillator | FMOscillator | AMOscillator | PWMOscillator | Gain;
+type AudioSource = Oscillator | FMOscillator | AMOscillator | PWMOscillator | Gain | Filter;
 type ControlSource = number | Signal | LFO | Envelope
 export interface Patch {
     inputs: Record<string, (...args: any[]) => void>
@@ -25,12 +26,16 @@ export interface Patch {
 }
 
 // Helpers
-function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSource) {
+function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSource): void {
     if (value === undefined) return;
     value instanceof LFO || value instanceof Signal || value instanceof Envelope
         ? value.connect(target)
         : (target as Signal | AudioParam).value = value;
 }
+
+function toNumber(value: ControlSource): number {
+    return typeof value === 'number' ? value : (value instanceof Signal ? value.value : 0);
+}   
 
 function makeOsc(type: ToneOscillatorType, freq: ControlSource = 220): AudioSource {
     const osc = new Oscillator(220, type).start()
@@ -38,18 +43,12 @@ function makeOsc(type: ToneOscillatorType, freq: ControlSource = 220): AudioSour
     return osc
 }
 
-function makeLfo(type: ToneOscillatorType, frequency: ControlSource, min: number = 0, max: number = 1): LFO {
-    const lfo = new LFO({min, max, type}).start()
-    assignOrConnect(lfo.frequency, frequency)
-    return lfo
-}
-
 function makeFm(
     frequency: ControlSource, 
     harmonicity: ControlSource = 1, modulationIndex: ControlSource = 1,
     carrier: ToneOscillatorType = 'sine', 
     modulator: ToneOscillatorType = 'sine'
-): FMOscillator {
+): AudioSource {
     const fmOsc = new FMOscillator(220, carrier, modulator).start();
     assignOrConnect(fmOsc.frequency, frequency);
     assignOrConnect(fmOsc.harmonicity, harmonicity);
@@ -62,7 +61,7 @@ function makeAm(
     harmonicity: ControlSource = 1, 
     carrier: ToneOscillatorType = 'sine',
     modulator: ToneOscillatorType = 'sine'
-): AMOscillator {
+): AudioSource {
     const amOsc = new AMOscillator(220, carrier, modulator).start();
     assignOrConnect(amOsc.frequency, frequency);
     assignOrConnect(amOsc.harmonicity, harmonicity);
@@ -72,11 +71,37 @@ function makeAm(
 function makePwm(
     frequency: ControlSource = 220, 
     modulationFrequency: ControlSource = 0.5,
-): PWMOscillator {
+): AudioSource {
     const pwmOsc = new PWMOscillator(220).start();
     assignOrConnect(pwmOsc.frequency, frequency);
     assignOrConnect(pwmOsc.modulationFrequency, modulationFrequency);
     return pwmOsc;
+}
+
+function makeFilter(
+    node: AudioSource, 
+    type: 'lowpass' | 'highpass' | 'bandpass' = 'lowpass',
+    frequency: ControlSource = 1000, 
+    q: ControlSource = 1,
+    rolloff: FilterRollOff = -12
+): AudioSource {
+    const filter = new Filter(1000, type);
+    filter.set({rolloff, Q: toNumber(q)});
+    assignOrConnect(filter.frequency, frequency);
+    assignOrConnect(filter.Q, q);
+    node.connect(filter);
+    return filter;
+}
+
+function makeLfo(
+    type: ToneOscillatorType, 
+    frequency: ControlSource, 
+    min: number = 0, 
+    max: number = 1
+): ControlSource {
+    const lfo = new LFO({min, max, type}).start()
+    assignOrConnect(lfo.frequency, frequency)
+    return lfo
 }
 
 // Library
@@ -105,11 +130,11 @@ export const library: Record<string, (...args: any[]) => any> = {
     pwm: (freq: ControlSource = 220, modFreq: ControlSource = 0.5): AudioSource => makePwm(freq, modFreq),
     
     // ControlSources
-    lfo: (frequency: ControlSource, min: number = 0, max: number = 1) : LFO => makeLfo('sine', frequency, min, max),
-    lfosine: (frequency: ControlSource, min: number = 0, max: number = 1) : LFO => makeLfo('sine', frequency, min, max),
-    lfotri: (frequency: ControlSource, min: number = 0, max: number = 1) : LFO => makeLfo('triangle', frequency, min, max),
-    lfosquare: (frequency: ControlSource, min: number = 0, max: number = 1) : LFO => makeLfo('square', frequency, min, max),
-    lfosaw: (frequency: ControlSource, min: number = 0, max: number = 1) : LFO => makeLfo('sawtooth', frequency, min, max),
+    lfo: (frequency: ControlSource, min: number = 0, max: number = 1) : ControlSource => makeLfo('sine', frequency, min, max),
+    lfosine: (frequency: ControlSource, min: number = 0, max: number = 1) : ControlSource => makeLfo('sine', frequency, min, max),
+    lfotri: (frequency: ControlSource, min: number = 0, max: number = 1) : ControlSource => makeLfo('triangle', frequency, min, max),
+    lfosquare: (frequency: ControlSource, min: number = 0, max: number = 1) : ControlSource => makeLfo('square', frequency, min, max),
+    lfosaw: (frequency: ControlSource, min: number = 0, max: number = 1) : ControlSource => makeLfo('sawtooth', frequency, min, max),
     env: (attack: number = 100, decay: number = 100, sustain: number = 0.5, release: number = 800): Envelope => {
         attack /= 1000;
         decay /= 1000;
@@ -123,6 +148,17 @@ export const library: Record<string, (...args: any[]) => any> = {
         assignOrConnect(gainNode.gain, value);
         node.connect(gainNode);
         return gainNode;
+    },
+
+    // Filters
+    hpf: (node: AudioSource, frequency: ControlSource = 1000, q: ControlSource = 1, rolloff: FilterRollOff = -12): AudioSource => {
+        return makeFilter(node, 'highpass', frequency, q, rolloff);
+    },
+    lpf: (node: AudioSource, frequency: ControlSource = 1000, q: ControlSource = 1, rolloff: FilterRollOff = -12): AudioSource => {
+        return makeFilter(node, 'lowpass', frequency, q, rolloff);
+    },
+    bpf: (node: AudioSource, frequency: ControlSource = 1000, q: ControlSource = 1, rolloff: FilterRollOff = -12): AudioSource => {
+        return makeFilter(node, 'bandpass', frequency, q, rolloff);
     },
 
     // Routing
