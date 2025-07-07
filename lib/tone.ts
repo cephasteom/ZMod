@@ -120,11 +120,15 @@ export interface Patch {
     dispose: () => void
 }
 
-export const compile = (code: string): Patch => {
+export const makePatch = (code: string): Patch => {
     const result = new Function(
         ...Object.keys(library), 
         code
     )(...Object.values(library))
+    
+    // fade in
+    result.output?.gain?.rampTo(1, 0.1);
+
     return {
         ...result,
         dispose: () => {

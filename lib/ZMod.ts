@@ -1,4 +1,4 @@
-import { library, type Patch } from "./tone";
+import { library, makePatch, type Patch } from "./tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 
 /**
@@ -120,22 +120,7 @@ export default class ZMod {
         
         try {
             this.patch?.dispose();
-            
-            const result = new Function(
-                ...Object.keys(library), 
-                this.transpiledCode
-            )(...Object.values(library))
-
-            // Fade in
-            result.output?.gain?.rampTo(1, 0.1);
-            
-            this.patch = {
-                ...result,
-                dispose: () => {
-                    result.output?.gain?.rampTo(0, 0.1); // Fade out volume
-                    setTimeout(() => result.output?.dispose?.(), 1000); // Allow time for fade out
-                }
-            }
+            this.patch = makePatch(this.transpiledCode);
         } catch (error) {
             console.error("Error compiling code:", error);
         }
