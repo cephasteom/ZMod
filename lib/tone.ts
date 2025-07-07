@@ -1,8 +1,3 @@
-// TODO: add more nodes
-// TODO: replace the nodes exposed as inputs with functions that control them. This will depend on what type of node they are.
-// E.g. for an _Envelope type, e() should trigger it, and e(0.1, 0.2, 0.5, 0.8) should set the attack, decay, sustain, and release times.
-
-import { format } from 'path'
 import { 
     Merge, 
     Signal, Param,
@@ -22,70 +17,98 @@ destination.channelCount === 2 && destination.chain(limiter)
 const allChannels = new Merge({channels: destination.maxChannelCount})
 allChannels.connect(destination)
 
+type AudioSource = Oscillator | FMOscillator | AMOscillator | PWMOscillator | Gain;
+type ControlSource = number | Signal | LFO | Envelope
+
 // HELPERS
-type Input = number | Signal | LFO | Envelope | undefined;
-
-const makeOutput = (node: Oscillator | FMOscillator | AMOscillator | PWMOscillator): Gain => {
-    const gain = new Gain(1)
-    node.connect(gain)
-    return gain
-}
-
-const makeOsc = (type: ToneOscillatorType, freq: Input = 220): Gain => {
-    const osc = new Oscillator(220, type).start()
-    assignOrConnect(osc.frequency, freq)
-    return makeOutput(osc)
-}
-
-function assignOrConnect(target: Signal<any> | Param<any>, value: Input) {
+function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSource) {
     if (value === undefined) return;
     value instanceof LFO || value instanceof Signal || value instanceof Envelope
         ? value.connect(target)
         : (target as Signal | AudioParam).value = value;
 }
 
+function toNumber(value: ControlSource): number {
+    return typeof value === 'number' ? value : (value as Signal).value;
+}
+
+const makeOsc = (type: ToneOscillatorType, freq: ControlSource = 220): AudioSource => {
+    const osc = new Oscillator(220, type).start()
+    assignOrConnect(osc.frequency, freq)
+    return osc
+}
+
+const makeLfo = (type: ToneOscillatorType, frequency: ControlSource, min: number = 0, max: number = 1): LFO => {
+    const lfo = new LFO({min, max, type}).start()
+    assignOrConnect(lfo.frequency, frequency)
+    return lfo
+}
+
+const makeFm = (
+    frequency: ControlSource, 
+    harmonicity: ControlSource = 1, modulationIndex: ControlSource = 1,
+    carrier: ToneOscillatorType = 'sine', 
+    modulator: ToneOscillatorType = 'sine'
+): FMOscillator => {
+    const fmOsc = new FMOscillator(220, carrier, modulator).start();
+    assignOrConnect(fmOsc.frequency, frequency);
+    assignOrConnect(fmOsc.harmonicity, harmonicity);
+    assignOrConnect(fmOsc.modulationIndex, modulationIndex);
+    return fmOsc;
+}
+
+const makeAm = (
+    frequency: ControlSource = 220, 
+    harmonicity: ControlSource = 1, 
+    carrier: ToneOscillatorType = 'sine',
+    modulator: ToneOscillatorType = 'sine'
+): AMOscillator => {
+    const amOsc = new AMOscillator(220, carrier, modulator).start();
+    assignOrConnect(amOsc.frequency, frequency);
+    assignOrConnect(amOsc.harmonicity, harmonicity);
+    return amOsc;
+}
+
+const makePwm = (
+    frequency: ControlSource = 220, 
+    modulationFrequency: ControlSource = 0.5,
+): PWMOscillator => {
+    const pwmOsc = new PWMOscillator(220).start();
+    assignOrConnect(pwmOsc.frequency, frequency);
+    assignOrConnect(pwmOsc.modulationFrequency, modulationFrequency);
+    return pwmOsc;
+}
+
 // LIBRARY
 export const library: Record<string, (...args: any[]) => any> = {
     value: (val: number) => val,
+    // Signals
     sig: (value: number) => new Signal(value),
     
-    // Base Oscillators
-    ...Object.fromEntries(['sine', 'triangle', 'square', 'sawtooth']
-        .map(type => [
-            ['triangle', 'sawtooth'].includes(type) ? `${type.slice(0,3)}` : type,
-            (freq: Input) => makeOsc(type as ToneOscillatorType, freq)
-        ])),
     
-    // Complex Oscillators
-    fm: (...args: Input[]): Gain => {
-        const fmOsc = new FMOscillator(220, 'sine', 'sine').start();
-        ['frequency', 'harmonicity', 'modulationIndex'].forEach((param, index) => {
-            assignOrConnect((fmOsc as any)[param], args[index])
-        })
-        return makeOutput(fmOsc)
-    },
-    am: (...args: Input[]): Gain => {
-        const amOsc = new AMOscillator(220, 'sine', 'sine').start();
-        ['frequency', 'harmonicity'].forEach((param, index) => {
-            assignOrConnect((amOsc as any)[param], args[index])
-        })
-        return makeOutput(amOsc)
-    },
-    pwm: (...args: Input[]): Gain => {
-        const pwmOsc = new PWMOscillator(220, 0.5).start();
-        ['frequency', 'modulationFrequency'].forEach((param, index) => {
-            assignOrConnect((pwmOsc as any)[param], args[index])
-        })
-        return makeOutput(pwmOsc)
-    },
+    // AudioSources
+    sine: (freq: ControlSource = 220): AudioSource => makeOsc('sine', freq),
+    tri: (freq: ControlSource = 220): AudioSource => makeOsc('triangle', freq),
+    square: (freq: ControlSource = 220): AudioSource => makeOsc('square', freq),
+    saw: (freq: ControlSource = 220): AudioSource => makeOsc('sawtooth', freq),
+    fm: (freq: ControlSource = 220, harm: ControlSource = 1, modi: ControlSource = 1): AudioSource => makeFm(freq, harm, modi),
+    fmsine: (freq: ControlSource = 220, harm: ControlSource = 1, modi: ControlSource = 1): AudioSource => makeFm(freq, harm, modi, 'sine'),
+    fmtri: (freq: ControlSource = 220, harm: ControlSource = 1, modi: ControlSource = 1): AudioSource => makeFm(freq, harm, modi, 'triangle'),
+    fmsquare: (freq: ControlSource = 220, harm: ControlSource = 1, modi: ControlSource = 1): AudioSource => makeFm(freq, harm, modi, 'square'),
+    fmsaw: (freq: ControlSource = 220, harm: ControlSource = 1, modi: ControlSource = 1): AudioSource => makeFm(freq, harm, modi, 'sawtooth'),
+    am: (freq: ControlSource = 220, harm: ControlSource = 1): AudioSource => makeAm(freq, harm),
+    amsine: (freq: ControlSource = 220, harm: ControlSource = 1): AudioSource => makeAm(freq, harm, 'sine'),
+    amtri: (freq: ControlSource = 220, harm: ControlSource = 1): AudioSource => makeAm(freq, harm, 'triangle'),
+    amsquare: (freq: ControlSource = 220, harm: ControlSource = 1): AudioSource => makeAm(freq, harm, 'square'),
+    amsaw: (freq: ControlSource = 220, harm: ControlSource = 1): AudioSource => makeAm(freq, harm, 'sawtooth'),
+    pwm: (freq: ControlSource = 220, modFreq: ControlSource = 0.5): AudioSource => makePwm(freq, modFreq),
     
-    // LFO
-    lfo: (frequency: number | Signal, min: number = 0, max: number = 1) : LFO => {
-        const lfo = new LFO(1, min, max).start()
-        assignOrConnect(lfo.frequency, frequency)
-        return lfo
-    },
-
+    // ControlSources
+    lfo: (frequency: ControlSource, min: number = 0, max: number = 1) : LFO => makeLfo('sine', frequency, min, max),
+    lfosine: (frequency: ControlSource, min: number = 0, max: number = 1) : LFO => makeLfo('sine', frequency, min, max),
+    lfotri: (frequency: ControlSource, min: number = 0, max: number = 1) : LFO => makeLfo('triangle', frequency, min, max),
+    lfosquare: (frequency: ControlSource, min: number = 0, max: number = 1) : LFO => makeLfo('square', frequency, min, max),
+    lfosaw: (frequency: ControlSource, min: number = 0, max: number = 1) : LFO => makeLfo('sawtooth', frequency, min, max),
     env: (attack: number = 100, decay: number = 100, sustain: number = 0.5, release: number = 800): Envelope => {
         attack /= 1000;
         decay /= 1000;
@@ -93,25 +116,16 @@ export const library: Record<string, (...args: any[]) => any> = {
         return new Envelope({attack, decay, sustain, release});
     },
 
-    mul: (
-        node: Gain | Signal,
-        value: number | Signal | Envelope
-    ): Gain | Signal => {
-        if (node instanceof Gain) assignOrConnect(node.gain, value)
-        if (node instanceof Signal) {
-            if(typeof value === 'number') return node.rampTo(value, 0.1)
-            if (value instanceof Signal || value instanceof Envelope) {
-                const mult = new Multiply();
-                node.connect(mult);
-                value.connect(mult.factor);
-                return mult;
-            }
-        }
-
-        return node
+    // Modifiers
+    amp: (node: AudioSource, value: ControlSource): Gain => {
+        const gainNode = new Gain(1);
+        assignOrConnect(gainNode.gain, value);
+        node.connect(gainNode);
+        return gainNode;
     },
 
-    out: (node: any) => {
+    // Routing
+    out: (node: AudioSource) => {
         const output = new Gain(0);
         node.connect(output)
         output.toDestination()
@@ -132,6 +146,7 @@ const inputFns: Record<string, (node: any) => (...args: any[]) => void> = {
         node.rampTo(value, rampTime / 1000);
     },
     _envelope: (node: Envelope) => (
+        duration: number = 1000,
         attack: number = 100, 
         decay: number = 100, 
         sustain: number = 0.8, 
@@ -141,7 +156,7 @@ const inputFns: Record<string, (node: any) => (...args: any[]) => void> = {
         decay /= 1000;
         release /= 1000;
         node.set({attack, decay, sustain, release});
-        node.triggerAttackRelease(release);
+        node.triggerAttackRelease(duration / 1000);
     }
 }
 
