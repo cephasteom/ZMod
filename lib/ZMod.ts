@@ -1,4 +1,4 @@
-import { library, makePatch, type Patch } from "./tone";
+import { library, makePatch, type Patch } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 
 /**
@@ -32,6 +32,7 @@ export default class ZMod {
     
     /**
      * The current audio patch created from the transpiled code.
+e current audio patch created from the transpiled cod/tonee.
      * Contains the inputs and output of the audio graph, and a dispose method to clean up resources.
      */
     patch?: Patch | null;
