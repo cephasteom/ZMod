@@ -5,11 +5,10 @@ import {
     Oscillator, LFO,
     FMOscillator, AMOscillator, PWMOscillator,
     Limiter, Gain, Envelope,
-    Multiply,
     type ToneOscillatorType
 } from 'tone'
 
-// ROUTING
+// Setup
 const limiter = new Limiter({threshold: -20})
 const destination = getDestination()
 destination.channelCount = destination.maxChannelCount
@@ -17,10 +16,15 @@ destination.channelCount === 2 && destination.chain(limiter)
 const allChannels = new Merge({channels: destination.maxChannelCount})
 allChannels.connect(destination)
 
+// Types
 type AudioSource = Oscillator | FMOscillator | AMOscillator | PWMOscillator | Gain;
 type ControlSource = number | Signal | LFO | Envelope
+export interface Patch {
+    inputs: Record<string, (...args: any[]) => void>
+    dispose: () => void
+}
 
-// HELPERS
+// Helpers
 function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSource) {
     if (value === undefined) return;
     value instanceof LFO || value instanceof Signal || value instanceof Envelope
@@ -28,28 +32,24 @@ function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSource)
         : (target as Signal | AudioParam).value = value;
 }
 
-function toNumber(value: ControlSource): number {
-    return typeof value === 'number' ? value : (value as Signal).value;
-}
-
-const makeOsc = (type: ToneOscillatorType, freq: ControlSource = 220): AudioSource => {
+function makeOsc(type: ToneOscillatorType, freq: ControlSource = 220): AudioSource {
     const osc = new Oscillator(220, type).start()
     assignOrConnect(osc.frequency, freq)
     return osc
 }
 
-const makeLfo = (type: ToneOscillatorType, frequency: ControlSource, min: number = 0, max: number = 1): LFO => {
+function makeLfo(type: ToneOscillatorType, frequency: ControlSource, min: number = 0, max: number = 1): LFO {
     const lfo = new LFO({min, max, type}).start()
     assignOrConnect(lfo.frequency, frequency)
     return lfo
 }
 
-const makeFm = (
+function makeFm(
     frequency: ControlSource, 
     harmonicity: ControlSource = 1, modulationIndex: ControlSource = 1,
     carrier: ToneOscillatorType = 'sine', 
     modulator: ToneOscillatorType = 'sine'
-): FMOscillator => {
+): FMOscillator {
     const fmOsc = new FMOscillator(220, carrier, modulator).start();
     assignOrConnect(fmOsc.frequency, frequency);
     assignOrConnect(fmOsc.harmonicity, harmonicity);
@@ -57,34 +57,35 @@ const makeFm = (
     return fmOsc;
 }
 
-const makeAm = (
+function makeAm(
     frequency: ControlSource = 220, 
     harmonicity: ControlSource = 1, 
     carrier: ToneOscillatorType = 'sine',
     modulator: ToneOscillatorType = 'sine'
-): AMOscillator => {
+): AMOscillator {
     const amOsc = new AMOscillator(220, carrier, modulator).start();
     assignOrConnect(amOsc.frequency, frequency);
     assignOrConnect(amOsc.harmonicity, harmonicity);
     return amOsc;
 }
 
-const makePwm = (
+function makePwm(
     frequency: ControlSource = 220, 
     modulationFrequency: ControlSource = 0.5,
-): PWMOscillator => {
+): PWMOscillator {
     const pwmOsc = new PWMOscillator(220).start();
     assignOrConnect(pwmOsc.frequency, frequency);
     assignOrConnect(pwmOsc.modulationFrequency, modulationFrequency);
     return pwmOsc;
 }
 
-// LIBRARY
+// Library
 export const library: Record<string, (...args: any[]) => any> = {
     value: (val: number) => val,
+    
     // Signals
     sig: (value: number) => new Signal(value),
-    
+
     
     // AudioSources
     sine: (freq: ControlSource = 220): AudioSource => makeOsc('sine', freq),
@@ -133,11 +134,7 @@ export const library: Record<string, (...args: any[]) => any> = {
     },
 }
 
-export interface Patch {
-    inputs: Record<string, (...args: any[]) => void>
-    dispose: () => void
-}
-
+// Input functions
 const inputFns: Record<string, (node: any) => (...args: any[]) => void> = {
     _signal: (node: any) => (value: number, rampTime: number = 100) => {
         node.rampTo(value, rampTime / 1000);
@@ -168,6 +165,7 @@ function formatInputs(inputs: Record<string, Signal | Param | Envelope>): Record
     }, {} as Record<string, (...args: any[]) => void>);
 }
 
+// Patch creation
 export const makePatch = (code: string): Patch => {
     const result = new Function(
         ...Object.keys(library), 

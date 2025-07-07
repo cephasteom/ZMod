@@ -84,6 +84,7 @@ export function registerNode(type: string): (...args: any[]) => Node {
         return new Node(type, [this, ...args].map(toNode), id);
     };
     return (...args: any[]) => {
+        console.log('source', type)
         const id = typeof args[0] === 'string' ? args[0] : undefined; // Extract id if first arg is a Node
         if (id) args.shift(); // Remove id from args if it exists
         return new Node(type, args.map(toNode), id);
