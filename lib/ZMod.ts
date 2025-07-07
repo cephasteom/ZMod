@@ -90,7 +90,7 @@ export default class ZMod {
                 ...Object.keys(this.nodes), 
                 `return (${this.parseCode(code)});`
             )(...Object.values(this.nodes));
-            
+
             const script = nodes.toScript();
             const transpiled = `let inputs = {};\n${script.lines.join("\n")}\nreturn {inputs, output: ${script.last}};`;
 
