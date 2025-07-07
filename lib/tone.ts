@@ -2,6 +2,7 @@
 // TODO: replace the nodes exposed as inputs with functions that control them. This will depend on what type of node they are.
 // E.g. for an _Envelope type, e() should trigger it, and e(0.1, 0.2, 0.5, 0.8) should set the attack, decay, sustain, and release times.
 
+import { format } from 'path'
 import { 
     Merge, 
     Signal, Param,
@@ -85,7 +86,10 @@ export const library: Record<string, (...args: any[]) => any> = {
         return lfo
     },
 
-    env: (attack: number = 0.1, decay: number = 0.2, sustain: number = 0.5, release: number = 0.8): Envelope => {
+    env: (attack: number = 100, decay: number = 100, sustain: number = 0.5, release: number = 800): Envelope => {
+        attack /= 1000;
+        decay /= 1000;
+        release /= 1000;
         return new Envelope({attack, decay, sustain, release});
     },
 
@@ -107,17 +111,46 @@ export const library: Record<string, (...args: any[]) => any> = {
         return node
     },
 
-    out: (node: Gain) => {
-        node.gain.value = 0; // Ensure initial volume is 0 - this will be faded in later
-        node.toDestination()
-        return node
+    out: (node: any) => {
+        const output = new Gain(0);
+        node.connect(output)
+        output.toDestination()
+        return output
     },
 }
 
 export interface Patch {
-    inputs: Record<string, Signal | Param | Envelope>,
-    output: Gain,
+    inputs: Record<string, (...args: any[]) => void>
     dispose: () => void
+}
+
+const inputFns: Record<string, (node: any) => (...args: any[]) => void> = {
+    _signal: (node: any) => (value: number, rampTime: number = 100) => {
+        node.rampTo(value, rampTime / 1000);
+    },
+    _param: (node: Signal) => (value: number, rampTime: number = 100) => {
+        node.rampTo(value, rampTime / 1000);
+    },
+    _envelope: (node: Envelope) => (
+        attack: number = 100, 
+        decay: number = 100, 
+        sustain: number = 0.8, 
+        release: number = 800
+    ) => {
+        attack /= 1000;
+        decay /= 1000;
+        release /= 1000;
+        node.set({attack, decay, sustain, release});
+        node.triggerAttackRelease(release);
+    }
+}
+
+function formatInputs(inputs: Record<string, Signal | Param | Envelope>): Record<string, (...args: any[]) => void> {
+    return Object.entries(inputs).reduce((acc, [key, value]) => {
+        const fn = inputFns[value.constructor.name.toLowerCase()];
+        acc[key] = fn ? fn(value) : () => {}
+        return acc;
+    }, {} as Record<string, (...args: any[]) => void>);
 }
 
 export const makePatch = (code: string): Patch => {
@@ -126,11 +159,12 @@ export const makePatch = (code: string): Patch => {
         code
     )(...Object.values(library))
     
-    // fade in
-    result.output?.gain?.rampTo(1, 0.1);
+    const { inputs, output } = result;
+    
+    output?.gain?.rampTo(1, 0.1);
 
     return {
-        ...result,
+        inputs: formatInputs(inputs || {}),
         dispose: () => {
             result.output?.gain?.rampTo(0, 0.1); // Fade out volume
             setTimeout(() => result.output?.dispose?.(), 1000); // Allow time for fade out

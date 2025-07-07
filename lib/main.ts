@@ -6,7 +6,12 @@ const codeInput = document.getElementById("code") as HTMLTextAreaElement;
 
 const zm = new ZMod()
 
-const start = () => zm.set(codeInput.value).start().inputs
+const start = () => {
+    zm.set(codeInput.value).start()
+    // setInterval(() => {
+    //     zm.inputs.e()
+    // }, 1000);
+}
 const stop = () => zm.clear()
 
 runButton?.addEventListener("click", start);
