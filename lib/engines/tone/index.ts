@@ -1,4 +1,4 @@
-// TODO: FX: Chorus, Delay, Distortion, Tremolo, Vibrato
+// TODO: FX: Chorus, Distortion, Tremolo, Vibrato
 // TODO: FeedbackCombFilter
 // TODO: polyphony amp(env()).voices(4)?
 // TODO: signals and their methods...
@@ -13,7 +13,7 @@ import {
     PulseOscillator,
     Noise,
     Gain, Envelope, Panner,
-    Reverb, FeedbackDelay,
+    Reverb, FeedbackDelay, Distortion,
     type FilterRollOff
 } from 'tone'
 
@@ -29,7 +29,6 @@ import {
     makeLfo, 
     makeFilter
 } from './factories';
-import { Time } from 'tone/build/esm/core/type/Units';
 
 export type { Patch } from "./tone.d.ts";
 
@@ -141,6 +140,12 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             assignOrConnect(delay.feedback, feedback);
             node.connect(delay);
             return delay;
+        },
+        dist: (node: AudioSignal, wet: ControlSignal = 0.5, distortion: ControlSignal = 0.5): AudioSignal => {
+            const dist = new Distortion(toNumber(distortion));
+            assignOrConnect(dist.wet, wet);
+            node.connect(dist);
+            return dist;
         }
     },
 

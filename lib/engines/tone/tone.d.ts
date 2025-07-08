@@ -6,10 +6,11 @@ import {
     Gain, Envelope, Panner,
     Filter,
     type ToneOscillatorType, type FilterRollOff,
-    Reverb
+    Reverb,
+    Distortion
 } from 'tone';
 
-export type AudioSignal = Oscillator | FMOscillator | AMOscillator | PWMOscillator | PulseOscillator | FatOscillator | Noise | Gain | Filter | Panner | Reverb | Delay;
+export type AudioSignal = Oscillator | FMOscillator | AMOscillator | PWMOscillator | PulseOscillator | FatOscillator | Noise | Gain | Filter | Panner | Reverb | Delay| Distortion;
 export type ControlSignal = number | Signal | LFO | Envelope
 export interface Patch {
     inputs: Record<string, (...args: any[]) => void>
