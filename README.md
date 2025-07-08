@@ -25,14 +25,6 @@ ZM.inputs.f(1000, 1000) // ramp frequency to 1000Hz over 1s
 ZM.clear()
 ```
 
-## Core
-
-### `value(val: number): number`
-
-Returns the number provided.
-
----
-
 ## Signals
 
 ### Signal
@@ -46,7 +38,7 @@ Creates a new signal with the specified value.
 Each of the following methods can be applied to a `Signal`, and passed one or more `number` arguments:
 
 ```ts
-(operator: Signal, ...args: number[]): Signal
+(...args: number[]): Signal
 ```
 
 Available functions:
@@ -160,7 +152,7 @@ Creates an ADSR envelope (all time values in milliseconds).
 ## Modifiers
 
 ### amp
-`amp(node: AudioSignal, value: ControlSignal): Gain`
+`amp(value: ControlSignal): Gain`
 
 Applies gain (amplitude) modulation.
 
@@ -169,22 +161,22 @@ Applies gain (amplitude) modulation.
 ## Filters
 
 ### hpf
-`hpf(node: AudioSignal, frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
+`hpf(frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
 
 High-pass filter.
 
 ### lpf
-`lpf(node: AudioSignal, frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
+`lpf(frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
 
 Low-pass filter.
 
 ### bpf
-`bpf(node: AudioSignal, frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
+`bpf(frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
 
 Band-pass filter.
 
 ### fbf
-`fbf(node: AudioSignal, delayTime?: ControlSignal, resonance?: ControlSignal): AudioSignal`
+`fbf(delayTime?: ControlSignal, resonance?: ControlSignal): AudioSignal`
 
 Feedback comb filter.
 
@@ -193,22 +185,22 @@ Feedback comb filter.
 ## Effects
 
 ### reverb
-`reverb(node: AudioSignal, wet?: ControlSignal, decay?: ControlSignal): AudioSignal`
+`reverb(wet?: ControlSignal, decay?: ControlSignal): AudioSignal`
 
 Reverb effect.
 
 ### delat
-`delay(node: AudioSignal, wet?: ControlSignal, delayTime?: ControlSignal, feedback?: ControlSignal): AudioSignal`
+`delay(wet?: ControlSignal, delayTime?: ControlSignal, feedback?: ControlSignal): AudioSignal`
 
 Feedback delay effect.
 
 ### dist
-`dist(node: AudioSignal, wet?: ControlSignal, distortion?: ControlSignal): AudioSignal`
+`dist(wet?: ControlSignal, distortion?: ControlSignal): AudioSignal`
 
 Distortion effect.
 
 ### chorus
-`chorus(node: AudioSignal, wet?: ControlSignal, frequency?: ControlSignal, feedback?: ControlSignal, depth?: ControlSignal): AudioSignal`
+`chorus(wet?: ControlSignal, frequency?: ControlSignal, feedback?: ControlSignal, depth?: ControlSignal): AudioSignal`
 
 Chorus effect.
 
@@ -217,12 +209,12 @@ Chorus effect.
 ## Routing
 
 ### pan
-`pan(node: AudioSignal, value?: ControlSignal): AudioSignal`
+`pan(value?: ControlSignal): AudioSignal`
 
 Stereo panner.
 
 ### out
-`out(node: AudioSignal): AudioSignal`
+`out(output: number): AudioSignal`
 
 Connects the signal to the audio destination.
 
