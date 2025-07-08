@@ -1,17 +1,19 @@
-// TODO: FX: Chorus, Delay, Reverb, Distortion, Tremolo, Vibrato
+// TODO: FX: Chorus, Delay, Distortion, Tremolo, Vibrato
 // TODO: FeedbackCombFilter
 // TODO: polyphony amp(env()).voices(4)?
 // TODO: signals and their methods...
 // TODO: AudioInput, AudioOutput - multichannel
 // TODO: External signals - how can plug in other streams to this one? Follower, etc.
 // TODO: ToneInstruments
+// TODO: docs should show inputs
+// TODO: synced signals....lfos....
 
 import { 
     Signal, Param,
     PulseOscillator,
     Noise,
     Gain, Envelope, Panner,
-    Reverb,
+    Reverb, FeedbackDelay,
     type FilterRollOff
 } from 'tone'
 
@@ -27,6 +29,7 @@ import {
     makeLfo, 
     makeFilter
 } from './factories';
+import { Time } from 'tone/build/esm/core/type/Units';
 
 export type { Patch } from "./tone.d.ts";
 
@@ -121,12 +124,24 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     },
 
     effects: {
-        reverb: (node: AudioSignal, wet: ControlSignal = 0.5, decay: ControlSignal = 1): AudioSignal => {
-            const reverb = new Reverb(toNumber(decay));
+        reverb: (node: AudioSignal, wet: ControlSignal = 0.5, decay: ControlSignal = 1000): AudioSignal => {
+            const reverb = new Reverb(toNumber(decay)/1000);
             assignOrConnect(reverb.wet, wet);
             node.connect(reverb);
             return reverb;
         },
+        delay: (node: AudioSignal, wet: ControlSignal = 0.5, delayTime: ControlSignal = 0.5, feedback: ControlSignal = 0.5): AudioSignal => {
+            const delay = new FeedbackDelay({
+                delayTime: toNumber(delayTime), 
+                feedback: toNumber(feedback),
+                wet: toNumber(wet)
+            });
+            assignOrConnect(delay.wet, wet);
+            assignOrConnect(delay.delayTime, delayTime);
+            assignOrConnect(delay.feedback, feedback);
+            node.connect(delay);
+            return delay;
+        }
     },
 
     routing: {
