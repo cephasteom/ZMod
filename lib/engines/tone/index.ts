@@ -11,6 +11,7 @@ import {
     PulseOscillator,
     Noise,
     Gain, Envelope, Panner,
+    Reverb,
     type FilterRollOff
 } from 'tone'
 
@@ -30,95 +31,134 @@ import {
 export type { Patch } from "./tone.d.ts";
 
 // Library
-export const library: Record<string, (...args: any[]) => any> = {
-    value: (val: number) => val,
+const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
+    core: {
+        value: (val: number): number => val,
+    },
     
     // Signals
-    sig: (value: number): Signal => new Signal(value),
+    signals: {
+        sig: (value: number): Signal => new Signal(value),
+    },
 
     // AudioSignals
-    sine: (freq: ControlSignal = 220): AudioSignal => makeOsc('sine', freq),
-    tri: (freq: ControlSignal = 220): AudioSignal => makeOsc('triangle', freq),
-    square: (freq: ControlSignal = 220): AudioSignal => makeOsc('square', freq),
-    saw: (freq: ControlSignal = 220): AudioSignal => makeOsc('sawtooth', freq),
+    oscillators: {
+        sine: (freq: ControlSignal = 220): AudioSignal => makeOsc('sine', freq),
+        tri: (freq: ControlSignal = 220): AudioSignal => makeOsc('triangle', freq),
+        square: (freq: ControlSignal = 220): AudioSignal => makeOsc('square', freq),
+        saw: (freq: ControlSignal = 220): AudioSignal => makeOsc('sawtooth', freq),
+        
+        fm: (freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal => makeFm(freq, harm, modi),
+        fmsine: (freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal => makeFm(freq, harm, modi, 'sine'),
+        fmtri: (freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal => makeFm(freq, harm, modi, 'triangle'),
+        fmsquare: (freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal => makeFm(freq, harm, modi, 'square'),
+        fmsaw: (freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal => makeFm(freq, harm, modi, 'sawtooth'),
+        
+        am: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm),
+        amsine: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'sine'),
+        amtri: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'triangle'),
+        amsquare: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'square'),
+        amsaw: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'sawtooth'),
+        
+        pulse: (freq: ControlSignal = 220, width: ControlSignal = 0.5): AudioSignal => {
+            const pulseOsc = new PulseOscillator(220, toNumber(width)).start();
+            assignOrConnect(pulseOsc.frequency, freq);
+            assignOrConnect(pulseOsc.width, width);
+            return pulseOsc;
+        },
+        pwm: (freq: ControlSignal = 220, modFreq: ControlSignal = 0.5): AudioSignal => makePwm(freq, modFreq),
     
-    fm: (freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal => makeFm(freq, harm, modi),
-    fmsine: (freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal => makeFm(freq, harm, modi, 'sine'),
-    fmtri: (freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal => makeFm(freq, harm, modi, 'triangle'),
-    fmsquare: (freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal => makeFm(freq, harm, modi, 'square'),
-    fmsaw: (freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal => makeFm(freq, harm, modi, 'sawtooth'),
-    
-    am: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm),
-    amsine: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'sine'),
-    amtri: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'triangle'),
-    amsquare: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'square'),
-    amsaw: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'sawtooth'),
-    
-    pulse: (freq: ControlSignal = 220, width: ControlSignal = 0.5): AudioSignal => {
-        const pulseOsc = new PulseOscillator(220, toNumber(width)).start();
-        assignOrConnect(pulseOsc.frequency, freq);
-        assignOrConnect(pulseOsc.width, width);
-        return pulseOsc;
+        fat: (freq: ControlSignal = 220, spread: number = 10): AudioSignal => makeFat(freq, spread),
+        fatsine: (freq: ControlSignal = 220, spread: number = 10): AudioSignal => makeFat(freq, spread, 'sine'),
+        fattri: (freq: ControlSignal = 220, spread: number = 10): AudioSignal => makeFat(freq, spread, 'triangle'),
+        fatsquare: (freq: ControlSignal = 220, spread: number = 10): AudioSignal => makeFat(freq, spread, 'square'),
+        fatsaw: (freq: ControlSignal = 220, spread: number = 10): AudioSignal => makeFat(freq, spread, 'sawtooth'),
     },
-    pwm: (freq: ControlSignal = 220, modFreq: ControlSignal = 0.5): AudioSignal => makePwm(freq, modFreq),
 
-    fat: (freq: ControlSignal = 220, spread: number = 10): AudioSignal => makeFat(freq, spread),
-    fatsine: (freq: ControlSignal = 220, spread: number = 10): AudioSignal => makeFat(freq, spread, 'sine'),
-    fattri: (freq: ControlSignal = 220, spread: number = 10): AudioSignal => makeFat(freq, spread, 'triangle'),
-    fatsquare: (freq: ControlSignal = 220, spread: number = 10): AudioSignal => makeFat(freq, spread, 'square'),
-    fatsaw: (freq: ControlSignal = 220, spread: number = 10): AudioSignal => makeFat(freq, spread, 'sawtooth'),
-
-    white: (): AudioSignal => new Noise('white').start(),
-    pink: (): AudioSignal => new Noise('pink').start(),
-    brown: (): AudioSignal => new Noise('brown').start(),        
+    noise: {
+        white: (): AudioSignal => new Noise('white').start(),
+        pink: (): AudioSignal => new Noise('pink').start(),
+        brown: (): AudioSignal => new Noise('brown').start(),        
+    },
     
     // ControlSignals
-    lfo: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sine', frequency, min, max),
-    lfosine: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sine', frequency, min, max),
-    lfotri: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('triangle', frequency, min, max),
-    lfosquare: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('square', frequency, min, max),
-    lfosaw: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sawtooth', frequency, min, max),
-    env: (attack: number = 100, decay: number = 100, sustain: number = 0.5, release: number = 800): Envelope => {
-        attack /= 1000;
-        decay /= 1000;
-        release /= 1000;
-        return new Envelope({attack, decay, sustain, release});
+    lfos: {
+        lfo: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sine', frequency, min, max),
+        lfosine: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sine', frequency, min, max),
+        lfotri: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('triangle', frequency, min, max),
+        lfosquare: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('square', frequency, min, max),
+        lfosaw: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sawtooth', frequency, min, max),
     },
 
-    // Modifiers
-    amp: (node: AudioSignal, value: ControlSignal): Gain => {
-        const gainNode = new Gain(1);
-        assignOrConnect(gainNode.gain, value);
-        node.connect(gainNode);
-        return gainNode;
+    envelopes: {
+        adsr: (attack: number = 100, decay: number = 100, sustain: number = 0.5, release: number = 800): Envelope => {
+            attack /= 1000;
+            decay /= 1000;
+            release /= 1000;
+            return new Envelope({attack, decay, sustain, release});
+        },
     },
 
-    // Filters
-    hpf: (node: AudioSignal, frequency: ControlSignal = 1000, q: ControlSignal = 1, rolloff: FilterRollOff = -12): AudioSignal => {
-        return makeFilter(node, 'highpass', frequency, q, rolloff);
-    },
-    lpf: (node: AudioSignal, frequency: ControlSignal = 1000, q: ControlSignal = 1, rolloff: FilterRollOff = -12): AudioSignal => {
-        return makeFilter(node, 'lowpass', frequency, q, rolloff);
-    },
-    bpf: (node: AudioSignal, frequency: ControlSignal = 1000, q: ControlSignal = 1, rolloff: FilterRollOff = -12): AudioSignal => {
-        return makeFilter(node, 'bandpass', frequency, q, rolloff);
+    modifiers: {
+        amp: (node: AudioSignal, value: ControlSignal): Gain => {
+            const gainNode = new Gain(1);
+            assignOrConnect(gainNode.gain, value);
+            node.connect(gainNode);
+            return gainNode;
+        },
     },
 
-    // Routing
-    pan: (node: AudioSignal, value: ControlSignal = 0): AudioSignal => {
-        const panner = new Panner(toNumber(value));
-        assignOrConnect(panner.pan, value);
-        node.connect(panner);
-        return panner;
+    filters: {
+        hpf: (node: AudioSignal, frequency: ControlSignal = 1000, q: ControlSignal = 1, rolloff: FilterRollOff = -12): AudioSignal => {
+            return makeFilter(node, 'highpass', frequency, q, rolloff);
+        },
+        lpf: (node: AudioSignal, frequency: ControlSignal = 1000, q: ControlSignal = 1, rolloff: FilterRollOff = -12): AudioSignal => {
+            return makeFilter(node, 'lowpass', frequency, q, rolloff);
+        },
+        bpf: (node: AudioSignal, frequency: ControlSignal = 1000, q: ControlSignal = 1, rolloff: FilterRollOff = -12): AudioSignal => {
+            return makeFilter(node, 'bandpass', frequency, q, rolloff);
+        },
     },
 
-    out: (node: AudioSignal) => {
-        const output = new Gain(0);
-        node.connect(output)
-        output.connect(destination);
-        return output
+    effects: {
+        reverb: (node: AudioSignal, wet: ControlSignal = 0.5, decay: ControlSignal = 1): AudioSignal => {
+            const reverb = new Reverb(toNumber(decay));
+            assignOrConnect(reverb.wet, wet);
+            node.connect(reverb);
+            return reverb;
+        },
     },
+
+    routing: {
+        pan: (node: AudioSignal, value: ControlSignal = 0): AudioSignal => {
+            const panner = new Panner(toNumber(value));
+            assignOrConnect(panner.pan, value);
+            node.connect(panner);
+            return panner;
+        },
+    
+        out: (node: AudioSignal) => {
+            const output = new Gain(0);
+            node.connect(output)
+            output.connect(destination);
+            return output
+        },
+    }
 }
+
+export const library: Record<string, (...args: any[]) => any> = Object.values(nodes)
+    .reduce((acc, val) => {      
+        Object.entries(val).forEach(([key, value]) => {
+            acc[key] = value;
+        });
+        return acc;
+    })
+
+export const libraryKeys = Object.entries(nodes)
+    .reduce((obj, [key, fns]) => ({
+        ...obj,
+        [key]: Object.keys(fns)
+    }), {} as Record<string, string[]>);
 
 // Input functions
 const inputFns: Record<string, (node: any) => (...args: any[]) => void> = {

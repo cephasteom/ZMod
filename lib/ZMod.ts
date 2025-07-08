@@ -1,4 +1,4 @@
-import { library, makePatch, type Patch } from "./engines/tone";
+import { library, libraryKeys, makePatch, type Patch } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 
 /**
@@ -42,6 +42,12 @@ e current audio patch created from the transpiled cod/tonee.
      */
     isNewPatch: boolean = false;
 
+    /**
+     * Library Keys - a list of categorised Node types available in the ZMod environment.
+     * Useful for UI generation.
+     */
+    libraryKeys: Record<string, string[]> = libraryKeys;
+
     constructor(context?: AudioContext) {
         // TODO: use the context in the patch
         this.context = context;
@@ -56,6 +62,8 @@ e current audio patch created from the transpiled cod/tonee.
      * @param library 
      */
     loadNodes(library: Record<string, (...args: any[]) => Node>) {
+        // flatten object so we just get the inner objects containing the node functions
+        
         this.nodes = Object.keys(library)
             .reduce((acc, type) => {
                 acc[type] = registerNode(type);
