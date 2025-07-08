@@ -38,7 +38,7 @@ Creates a new signal with the specified value.
 Each of the following methods can be applied to a `Signal`, and passed one or more `number` arguments:
 
 ```ts
-(...args: number[]): Signal
+Signal.fn(...args: number[]): Signal
 ```
 
 Available functions:
@@ -56,6 +56,9 @@ Available functions:
 * `scale`
 * `scaleexp`
 
+```ts
+sig(1).add(2).multiply(3)
+```
 ---
 
 ## Oscillators
@@ -71,6 +74,10 @@ Available functions:
 * `square`
 * `saw`
 
+```ts
+sine(100).out()
+```
+
 ### FM Oscillators
 
 ```ts
@@ -82,6 +89,14 @@ Available functions:
 * `fmtri`
 * `fmsquare`
 * `fmsaw`
+
+```ts
+fmsaw(
+    100,
+    lfosaw(0.5,0.5,10),
+    lfosine(0.25,1,10)
+).out()
+```
 
 ### AM Oscillators
 
@@ -95,10 +110,22 @@ Available functions:
 * `amsquare`
 * `amsaw`
 
+```ts
+fmsaw(
+    lfosaw(0.125,100,1000),
+    lfosaw(0.5,0.5,10),
+    lfosine(0.25,1,10)
+).out()
+```
+
 ### Pulse & PWM
 
 * `pulse(freq: ControlSignal, width: ControlSignal): AudioSignal`
 * `pwm(freq: ControlSignal, modFreq: ControlSignal): AudioSignal`
+
+```ts
+pwm(100, lfo(0.125,0.5,2)).out()
+```
 
 ### Fat Oscillators
 
@@ -152,7 +179,7 @@ Creates an ADSR envelope (all time values in milliseconds).
 ## Modifiers
 
 ### amp
-`amp(value: ControlSignal): Gain`
+`AudioSignal.amp(value: ControlSignal): Gain`
 
 Applies gain (amplitude) modulation.
 
@@ -161,22 +188,22 @@ Applies gain (amplitude) modulation.
 ## Filters
 
 ### hpf
-`hpf(frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
+`AudioSignal.hpf(frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
 
 High-pass filter.
 
 ### lpf
-`lpf(frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
+`AudioSignal.lpf(frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
 
 Low-pass filter.
 
 ### bpf
-`bpf(frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
+`AudioSignal.bpf(frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
 
 Band-pass filter.
 
 ### fbf
-`fbf(delayTime?: ControlSignal, resonance?: ControlSignal): AudioSignal`
+`AudioSignal.fbf(delayTime?: ControlSignal, resonance?: ControlSignal): AudioSignal`
 
 Feedback comb filter.
 
@@ -185,22 +212,22 @@ Feedback comb filter.
 ## Effects
 
 ### reverb
-`reverb(wet?: ControlSignal, decay?: ControlSignal): AudioSignal`
+`AudioSignal.reverb(wet?: ControlSignal, decay?: ControlSignal): AudioSignal`
 
 Reverb effect.
 
 ### delat
-`delay(wet?: ControlSignal, delayTime?: ControlSignal, feedback?: ControlSignal): AudioSignal`
+`AudioSignal.delay(wet?: ControlSignal, delayTime?: ControlSignal, feedback?: ControlSignal): AudioSignal`
 
 Feedback delay effect.
 
 ### dist
-`dist(wet?: ControlSignal, distortion?: ControlSignal): AudioSignal`
+`AudioSignal.dist(wet?: ControlSignal, distortion?: ControlSignal): AudioSignal`
 
 Distortion effect.
 
 ### chorus
-`chorus(wet?: ControlSignal, frequency?: ControlSignal, feedback?: ControlSignal, depth?: ControlSignal): AudioSignal`
+`AudioSignal.chorus(wet?: ControlSignal, frequency?: ControlSignal, feedback?: ControlSignal, depth?: ControlSignal): AudioSignal`
 
 Chorus effect.
 
@@ -209,12 +236,12 @@ Chorus effect.
 ## Routing
 
 ### pan
-`pan(value?: ControlSignal): AudioSignal`
+`AudioSignal.pan(value?: ControlSignal): AudioSignal`
 
 Stereo panner.
 
 ### out
-`out(output: number): AudioSignal`
+`AudioSignal.out(output: number): AudioSignal`
 
 Connects the signal to the audio destination.
 
