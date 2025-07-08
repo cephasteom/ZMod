@@ -1,5 +1,3 @@
-// TODO: FX: Chorus, Distortion, Tremolo, Vibrato
-// TODO: FeedbackCombFilter
 // TODO: polyphony amp(env()).voices(4)?
 // TODO: signals and their methods...
 // TODO: AudioInput, AudioOutput - multichannel
@@ -13,8 +11,9 @@ import {
     PulseOscillator,
     Noise,
     Gain, Envelope, Panner,
-    Reverb, FeedbackDelay, Distortion,
-    type FilterRollOff
+    Reverb, FeedbackDelay, Distortion, Chorus,
+    type FilterRollOff,
+    FeedbackCombFilter
 } from 'tone'
 
 import { destination } from './audio';
@@ -120,6 +119,16 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
         bpf: (node: AudioSignal, frequency: ControlSignal = 1000, q: ControlSignal = 1, rolloff: FilterRollOff = -12): AudioSignal => {
             return makeFilter(node, 'bandpass', frequency, q, rolloff);
         },
+        fbf: (node: AudioSignal, delayTime: ControlSignal = 0.5, resonance: ControlSignal = 0.5): AudioSignal => {
+            const filter = new FeedbackCombFilter({
+                delayTime: toNumber(delayTime),
+                resonance: toNumber(resonance)
+            });
+            assignOrConnect(filter.delayTime, delayTime);
+            assignOrConnect(filter.resonance, resonance);
+            node.connect(filter);
+            return filter;  
+        }
     },
 
     effects: {
@@ -146,6 +155,19 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             assignOrConnect(dist.wet, wet);
             node.connect(dist);
             return dist;
+        },
+        chorus: (node: AudioSignal, wet: ControlSignal = 0.5, frequency: ControlSignal = 1, feedback: ControlSignal = 0.005, depth: ControlSignal = 0.7): AudioSignal => {
+            const chorus = new Chorus({
+                wet: toNumber(wet),
+                frequency: toNumber(frequency),
+                feedback: toNumber(feedback),
+                depth: toNumber(depth)
+            });
+            assignOrConnect(chorus.wet, wet);
+            assignOrConnect(chorus.frequency, frequency);
+            assignOrConnect(chorus.feedback, feedback);
+            node.connect(chorus);
+            return chorus;
         }
     },
 
