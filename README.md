@@ -5,14 +5,14 @@
 const ZM = new ZMod()
 
 // pass a line of the Zen Modular scripting language
-ZM.set(`sine(sig(100)).mul(env(0.1,0.1,0.5,0.8)).out(0)`)
+ZM.set(`sine(100).amp(env(0.1,0.1,0.5,0.8)).out(0)`)
 // start the patch
 ZM.start()
 // clear patch and dispose of all resources
 ZM.clear()
 
 // optionally, pass a string (with or without quotes) as the first argument of a node
-ZM.set(`sine(sig(freq)).mul(env(e)).out(0)`)
+ZM.set(`sine(sig(freq)).amp(env(e)).out(0)`)
 // making the node controllable from outside the patch
 console.log(ZM.inputs)
 // returns {e: ƒ(), freq: ƒ()}
@@ -24,12 +24,6 @@ ZM.inputs.f(1000, 1000) // ramp frequency to 1000Hz over 1s
 // clear patch and dispose of all resources
 ZM.clear()
 ```
-## Syntax
-Here is a technical reference in Markdown format for your `nodes` object. Each section includes function names, parameters with types, and return types—structured for developer documentation.
-
----
-
-# Audio Node API Reference
 
 ## Core
 
