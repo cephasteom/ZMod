@@ -46,7 +46,7 @@ e current audio patch created from the transpiled cod/tonee.
         // TODO: use the context in the patch
         this.context = context;
         // Load the library of Nodes 
-        // loaded internally so that we might swap out tone.js for another libary in future
+        // loaded internally so that we might swap out tone.js for another library in future
         this.loadNodes(library)
     }
 

@@ -3,12 +3,15 @@ import ZMod from "./ZMod";
 const runButton = document.getElementById("start");
 const stopButton = document.getElementById("stop");
 const codeInput = document.getElementById("code") as HTMLTextAreaElement;
+const nodesDisplay = document.getElementById("nodes") as HTMLParagraphElement;
 // if code in localStorage, set it to codeInput
 if (localStorage.getItem("zmod-code")) {
     codeInput.value = localStorage.getItem("zmod-code") || "";
 }
 
 const zm = new ZMod()
+
+nodesDisplay.innerHTML = Object.keys(zm.nodes).slice(1).map(node => `<span class="node">${node}</span>`).join(", ");
 
 const start = () => {
     zm.set(codeInput.value).start()

@@ -10,6 +10,7 @@
             margin: 2rem;
             background-color: black;
             color: white;
+            
         }
         textarea {
             width: calc(100% - 2rem);
@@ -26,6 +27,7 @@
             outline: none;
             border-color: pink;
         }
+
         button {
             margin-top: 10px;
             background-color: black;
@@ -34,14 +36,30 @@
             padding: 0.5rem 1rem;
             border-radius: 5px;
         }
+
+        .editor {
+            margin-bottom: 2rem;
+        }
+
+        h1, h2 {
+            letter-spacing: 0.5px;
+        }
+        p {
+            line-height: 1.5rem;
+        }
     </style>
 </head>
 <body>
 <h1>ZMod</h1>
-<textarea id="code" rows="10" cols="50">
-saw(100).amp(0.5).lpf(1000).out();
-</textarea>
-<button id="start">Start</button>
-<button id="stop">Stop</button>
+<div class="editor">
+    <textarea id="code" rows="10" cols="50">
+        sine(100).out();
+    </textarea>
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+</div>
+
+<h2>Nodes</h2>
+<p id="nodes"></p>
 </body>
 </html>
