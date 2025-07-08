@@ -7,7 +7,8 @@
 // TODO: synced signals....lfos....
 
 import { 
-    Signal, Param,
+    Signal, Abs, Add, Subtract, GreaterThan, GreaterThanZero, Multiply, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp,
+    Param, 
     PulseOscillator,
     Noise,
     Gain, Envelope, Panner,
@@ -40,6 +41,17 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     // Signals
     signals: {
         sig: (value: number): Signal => new Signal(value),
+        ...Object.fromEntries([Abs, Add, Multiply, Subtract, GreaterThan, GreaterThanZero, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp].map((Class) => {
+            // to lowercase and remove any _
+            const name = Class.name.toLowerCase().replace(/_/g, '');
+            return [name, (signal: Signal, ...args: number[]): Signal => {
+                // TODO: if args are signals, how shall we handle them?
+                // @ts-ignore
+                const node = new Class(...args);
+                signal.connect(node);
+                return node;
+            }]
+        }))
     },
 
     // AudioSignals
