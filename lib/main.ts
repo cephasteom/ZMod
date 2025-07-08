@@ -3,6 +3,10 @@ import ZMod from "./ZMod";
 const runButton = document.getElementById("start");
 const stopButton = document.getElementById("stop");
 const codeInput = document.getElementById("code") as HTMLTextAreaElement;
+// if code in localStorage, set it to codeInput
+if (localStorage.getItem("zmod-code")) {
+    codeInput.value = localStorage.getItem("zmod-code") || "";
+}
 
 const zm = new ZMod()
 
@@ -20,6 +24,8 @@ stopButton?.addEventListener("click", stop)
 codeInput?.addEventListener("keydown", (event) => {
     if (!(event.shiftKey && event.key === "Enter")) return
     event.preventDefault();
+    // Save code to localStorage
+    localStorage.setItem("zmod-code", codeInput.value);
     start();
 });
 
