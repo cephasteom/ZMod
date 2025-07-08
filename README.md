@@ -66,7 +66,7 @@ sig(1).add(2).multiply(3)
 ### Basic Waveforms
 
 ```ts
-(freq: ControlSignal = 220): AudioSignal
+(freq: ControlSignal = 220): Oscillator
 ```
 
 * `sine`
@@ -81,7 +81,7 @@ sine(100).out()
 ### FM Oscillators
 
 ```ts
-(freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal
+(freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): Oscillator
 ```
 
 * `fm`
@@ -101,7 +101,7 @@ fmsaw(
 ### AM Oscillators
 
 ```ts
-(freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal
+(freq: ControlSignal = 220, harm: ControlSignal = 1): Oscillator
 ```
 
 * `am`
@@ -120,8 +120,8 @@ fmsaw(
 
 ### Pulse & PWM
 
-* `pulse(freq: ControlSignal, width: ControlSignal): AudioSignal`
-* `pwm(freq: ControlSignal, modFreq: ControlSignal): AudioSignal`
+* `pulse(freq: ControlSignal, width: ControlSignal): Oscillator`
+* `pwm(freq: ControlSignal, modFreq: ControlSignal): Oscillator`
 
 ```ts
 pwm(100, lfo(0.125,0.5,2)).out()
@@ -130,7 +130,7 @@ pwm(100, lfo(0.125,0.5,2)).out()
 ### Fat Oscillators
 
 ```ts
-(freq: ControlSignal = 220, spread: number = 10): AudioSignal
+(freq: ControlSignal = 220, spread: number = 10): Oscillator
 ```
 
 * `fat`
@@ -246,3 +246,9 @@ Stereo panner.
 Connects the signal to the audio destination.
 
 ---
+
+
+```js
+s0.set({inst: 'zmod', graph: 'sine(100).amp(env(e)).out()', voices: 4})
+s0.e.every(4)
+```
