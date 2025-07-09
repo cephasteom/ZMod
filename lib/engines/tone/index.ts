@@ -1,4 +1,4 @@
-// TODO: AudioInput, AudioOutput - multichannel
+// TODO: AudioInput
 // TODO: External signals - how can plug in other streams to this one? Follower, etc.
 // TODO: synced signals....lfos....
 
@@ -14,7 +14,7 @@ import {
     FeedbackCombFilter
 } from 'tone'
 
-import { outputDevice } from './audio';
+import { outputChannels, feedbackChannels } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
 import { assignOrConnect, toNumber } from './helpers';
 import { 
@@ -187,6 +187,13 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             node.connect(panner);
             return panner;
         },
+
+        feedback: (channel: number = 0, gain: ControlSignal = 0.1): AudioSignal => {
+            const output = new Gain(toNumber(gain));
+            feedbackChannels.connect(output, channel);
+            assignOrConnect(output.gain, gain);
+            return output;
+        },
     
         out: (node: AudioSignal, channel: number = 0) => {
             const output = new Gain(0);
@@ -197,8 +204,8 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             output.connect(split);
             
             // then connect these channels to the main audio multi-channel output
-            split.connect(outputDevice, 0, (channel % outputDevice.numberOfInputs))
-            split.connect(outputDevice, 1, ((channel + 1) % outputDevice.numberOfInputs))
+            split.connect(outputChannels, 0, (channel % outputChannels.numberOfInputs))
+            split.connect(outputChannels, 1, ((channel + 1) % outputChannels.numberOfInputs))
             return output
         },
     }
