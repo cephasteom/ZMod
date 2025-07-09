@@ -11,7 +11,9 @@ import {
     Reverb, FeedbackDelay, Distortion, Chorus,
     Split, 
     type FilterRollOff,
-    FeedbackCombFilter
+    FeedbackCombFilter,
+    Meter,
+    Delay
 } from 'tone'
 
 import { outputChannels, feedbackChannels } from './audio';
@@ -119,7 +121,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     },
 
     metering: {
-        follower: (node: AudioSignal, smoothing: ControlSignal = 0.1): ControlSignal => {
+        follow: (node: AudioSignal, smoothing: ControlSignal = 0.1): ControlSignal => {
             const follower = new Follower(toNumber(smoothing));
             node.connect(follower);
             return follower;
@@ -196,15 +198,17 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             return panner;
         },
 
-        feedback: (channel: number = 0, gain: ControlSignal = 0.1): AudioSignal => {
-            const output = new Gain(toNumber(gain));
-            feedbackChannels.connect(output, channel);
+        feedback: (channel: number = 0, gain: ControlSignal = 1): AudioSignal => {
+            const output = new Gain(1);
+            const delay = new Delay(0.01); // 10 ms delay - otherwise we get a feedback loop and the audio will not play
+            feedbackChannels.connect(output, channel, 0);
+            output.connect(delay);
             assignOrConnect(output.gain, gain);
-            return output;
+            return delay;
         },
     
         out: (node: AudioSignal, channel: number = 0) => {
-            const output = new Gain(0);
+            const output = new Gain(1);
             node.connect(output)
             
             // split the output into two channels

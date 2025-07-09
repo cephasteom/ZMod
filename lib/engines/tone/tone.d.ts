@@ -12,7 +12,7 @@ import {
 } from 'tone';
 
 export type AudioSignal = Oscillator | FMOscillator | AMOscillator | PWMOscillator | PulseOscillator | FatOscillator | Noise | Gain | Filter | Panner | Reverb | Delay | Distortion | Chorus;
-export type ControlSignal = number | Signal | LFO | Envelope | Follower | Param;
+export type ControlSignal = number | Signal | LFO | Envelope | Follower | Param | Meter | Follower;
 export interface Patch {
     inputs: Record<string, (...args: any[]) => void>
     dispose: () => void
