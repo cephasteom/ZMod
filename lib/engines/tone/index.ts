@@ -121,10 +121,12 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     },
 
     metering: {
-        follow: (node: AudioSignal, smoothing: ControlSignal = 0.1): ControlSignal => {
+        follow: (node: AudioSignal, smoothing: ControlSignal = 0.001): ControlSignal => {
+            const gainNode = new Gain(1);
             const follower = new Follower(toNumber(smoothing));
             node.connect(follower);
-            return follower;
+            follower.connect(gainNode);
+            return gainNode;
         }
     },
 
@@ -198,12 +200,13 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             return panner;
         },
 
-        feedback: (channel: number = 0, gain: ControlSignal = 1): AudioSignal => {
+        // TODO: convert delay time to ms
+        fb: (channel: number = 0, delayTime: ControlSignal = 0.01): AudioSignal => {
             const output = new Gain(1);
-            const delay = new Delay(0.01); // 10 ms delay - otherwise we get a feedback loop and the audio will not play
+            const delay = new Delay(Math.max(0.01, toNumber(delayTime))); // 10 ms delay - otherwise we get a feedback loop and the audio will not play
             feedbackChannels.connect(output, channel, 0);
+            assignOrConnect(delay.delayTime, delayTime);
             output.connect(delay);
-            assignOrConnect(output.gain, gain);
             return delay;
         },
     
