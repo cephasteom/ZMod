@@ -243,6 +243,10 @@ Distortion effect.
 Chorus effect.
 
 ---
+## Metering
+---
+### follow
+<!-- TODO -->
 
 ## Routing
 
@@ -265,7 +269,8 @@ sine(200).amp(0.5).out(0) // uses channels 0
 sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(0) // uses channels 0 and 1
 sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(2) // use channels 2 and 3... etc.
 ```
-
+### fb
+<!-- TODO -->
 ---
 
 

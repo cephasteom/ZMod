@@ -223,6 +223,15 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             split.connect(outputChannels, 1, ((channel + 1) % outputChannels.numberOfInputs))
             return output
         },
+
+        stack: (...nodes: AudioSignal[]): AudioSignal => {
+            if (nodes.length === 0) {
+                throw new Error("No nodes provided to stack");
+            }
+            const output = new Gain(1);
+            nodes.forEach(node => node.connect(output))
+            return output;
+        }
     }
 }
 
