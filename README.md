@@ -271,6 +271,15 @@ sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(2) // use channels 2 and 3... et
 ```
 ### fb
 <!-- TODO -->
+
+### stack
+`(...nodes: AudioSignal[]): AudioSignal`
+
+Stack multiple audio graphs.
+
+```ts
+stack(...Array.from(Array(10).keys()).map(i => sine((i+1)*100).amp(0.1 / (i+1)))).pan().out()
+```
 ---
 
 
