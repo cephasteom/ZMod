@@ -1,6 +1,6 @@
 # ZMod
 
-## Basic Use
+## Basic Usage
 ```js
 const ZM = new ZMod()
 
@@ -29,16 +29,16 @@ ZM.clear()
 
 ### Signal
 
-`sig(value: number): Signal`
+`sig(value: number): ControlSignal`
 
-Creates a new signal with the specified value.
+Creates a new `ControlSignal` with the specified value.
 
 ### Signal Operators 
 
-Each of the following methods can be applied to a `Signal`, and passed one or more `number` arguments:
+Each of the following methods can be applied to a `ControlSignal`, and passed one or more `number` arguments:
 
 ```ts
-Signal.fn(...args: number[]): Signal
+ControlSignal.fn(...args: number[]): ControlSignal
 ```
 
 Available functions:
@@ -57,7 +57,7 @@ Available functions:
 * `scaleexp`
 
 ```ts
-sig(1).add(2).multiply(3)
+sine(lfo(0.5,100,200).multiply(2)).out()
 ```
 ---
 
@@ -66,7 +66,7 @@ sig(1).add(2).multiply(3)
 ### Basic Waveforms
 
 ```ts
-(freq: ControlSignal = 220): Oscillator
+(freq: ControlSignal = 220): AudioSignal
 ```
 
 * `sine`
@@ -81,7 +81,7 @@ sine(100).out()
 ### FM Oscillators
 
 ```ts
-(freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): Oscillator
+(freq: ControlSignal = 220, harm: ControlSignal = 1, modi: ControlSignal = 1): AudioSignal
 ```
 
 * `fm`
@@ -101,7 +101,7 @@ fmsaw(
 ### AM Oscillators
 
 ```ts
-(freq: ControlSignal = 220, harm: ControlSignal = 1): Oscillator
+(freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal
 ```
 
 * `am`
@@ -120,8 +120,8 @@ fmsaw(
 
 ### Pulse & PWM
 
-* `pulse(freq: ControlSignal, width: ControlSignal): Oscillator`
-* `pwm(freq: ControlSignal, modFreq: ControlSignal): Oscillator`
+* `pulse(freq: ControlSignal, width: ControlSignal): AudioSignal`
+* `pwm(freq: ControlSignal, modFreq: ControlSignal): AudioSignal`
 
 ```ts
 pwm(100, lfo(0.125,0.5,2)).out()
@@ -130,7 +130,7 @@ pwm(100, lfo(0.125,0.5,2)).out()
 ### Fat Oscillators
 
 ```ts
-(freq: ControlSignal = 220, spread: number = 10): Oscillator
+(freq: ControlSignal = 220, spread: number = 10): AudioSignal
 ```
 
 * `fat`
@@ -170,10 +170,14 @@ pwm(100, lfo(0.125,0.5,2)).out()
 ## Envelopes
 
 ### adsr
-`adsr(attack?: number, decay?: number, sustain?: number, release?: number): Envelope`
+`adsr(attack?: number, decay?: number, sustain?: number, release?: number): ControlSignal`
 
-Creates an ADSR envelope (all time values in milliseconds).
+Creates a `ControlSignal` controlled by an adsr envelope (all time values in milliseconds).
 
+```ts
+sine(100).amp(env()).out()
+```
+Envelopes must be triggered from outside the patch. See [Basic Usage](#basic-usage) above.
 ---
 
 ## Modifiers
@@ -183,9 +187,16 @@ Creates an ADSR envelope (all time values in milliseconds).
 
 Applies gain (amplitude) modulation.
 
+```ts
+sine(100).amp(lfo()).out()
+```
+
 ---
 
 ## Filters
+```ts
+saw(100).lpf(lfo(0.5,100,1000)).out()
+```
 
 ### hpf
 `AudioSignal.hpf(frequency?: ControlSignal, q?: ControlSignal, rolloff?: FilterRollOff): AudioSignal`
@@ -216,7 +227,7 @@ Feedback comb filter.
 
 Reverb effect.
 
-### delat
+### delay
 `AudioSignal.delay(wet?: ControlSignal, delayTime?: ControlSignal, feedback?: ControlSignal): AudioSignal`
 
 Feedback delay effect.
@@ -238,7 +249,11 @@ Chorus effect.
 ### pan
 `AudioSignal.pan(value?: ControlSignal): AudioSignal`
 
-Stereo panner.
+Stereo panner. Values between -1 and 1.
+
+```ts
+fm(100).pan(lfo(0.5,-1,1)).out()
+```
 
 ### out
 `AudioSignal.out(output: number): AudioSignal`

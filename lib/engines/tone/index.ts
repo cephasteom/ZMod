@@ -1,9 +1,5 @@
-// TODO: polyphony amp(env()).voices(4)?
-// TODO: signals and their methods...
 // TODO: AudioInput, AudioOutput - multichannel
 // TODO: External signals - how can plug in other streams to this one? Follower, etc.
-// TODO: ToneInstruments
-// TODO: docs should show inputs
 // TODO: synced signals....lfos....
 
 import { 
@@ -13,11 +9,12 @@ import {
     Noise,
     Gain, Envelope, Panner,
     Reverb, FeedbackDelay, Distortion, Chorus,
+    Split,
     type FilterRollOff,
     FeedbackCombFilter
 } from 'tone'
 
-import { destination } from './audio';
+import { destination, channels } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
 import { assignOrConnect, toNumber } from './helpers';
 import { 
@@ -191,10 +188,17 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             return panner;
         },
     
-        out: (node: AudioSignal) => {
+        out: (node: AudioSignal, channel: number = 0) => {
             const output = new Gain(0);
             node.connect(output)
-            output.connect(destination);
+            
+            // split the output into two channels
+            const split = new Split(2);
+            output.connect(split);
+            
+            // then connect these channels to the main audio multi-channel output
+            split.connect(channels, 0, (channel % channels.numberOfInputs))
+            split.connect(channels, 1, ((channel + 1) % channels.numberOfInputs))
             return output
         },
     }
