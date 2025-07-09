@@ -14,7 +14,7 @@ import {
     FeedbackCombFilter
 } from 'tone'
 
-import { destination, channels } from './audio';
+import { outputDevice } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
 import { assignOrConnect, toNumber } from './helpers';
 import { 
@@ -197,8 +197,8 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             output.connect(split);
             
             // then connect these channels to the main audio multi-channel output
-            split.connect(channels, 0, (channel % channels.numberOfInputs))
-            split.connect(channels, 1, ((channel + 1) % channels.numberOfInputs))
+            split.connect(outputDevice, 0, (channel % outputDevice.numberOfInputs))
+            split.connect(outputDevice, 1, ((channel + 1) % outputDevice.numberOfInputs))
             return output
         },
     }
