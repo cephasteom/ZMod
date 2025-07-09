@@ -122,7 +122,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
 
     metering: {
         follow: (node: AudioSignal, smoothing: ControlSignal = 0.001): ControlSignal => {
-            const follower = new Follower();
+            const follower = new Follower(toNumber(smoothing));
             const signal = new Signal();
             node.connect(follower);
             follower.connect(signal);
