@@ -249,7 +249,7 @@ Chorus effect.
 ### pan
 `AudioSignal.pan(value?: ControlSignal): AudioSignal`
 
-Stereo panner. Values between -1 and 1.
+Stereo panner. Values between -1 and 1. Converts the signal to stereo.
 
 ```ts
 fm(100).pan(lfo(0.5,-1,1)).out()
@@ -258,10 +258,11 @@ fm(100).pan(lfo(0.5,-1,1)).out()
 ### out
 `AudioSignal.out(output: number = 0): AudioSignal`
 
-Connects the signal to the audio destination's given channel. You can route to any outputs that your sound device has. If you provide an invalid channel index, this will wrap around at the max channel count. All audio graphs are stereo so `output` will usually be an even number. 
+Connects the signal to the audio destination's given channel. You can route to any outputs that your sound device has. If you provide an invalid channel index, this will wrap around at the max channel count. All audio graphs are mono until you use `pan()`.
 
 ```ts
-sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(0) // use channels 0 and 1
+sine(200).amp(0.5).out(0) // uses channels 0
+sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(0) // uses channels 0 and 1
 sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(2) // use channels 2 and 3... etc.
 ```
 

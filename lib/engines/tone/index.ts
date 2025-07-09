@@ -7,9 +7,9 @@ import {
     Param, 
     PulseOscillator,
     Noise,
-    Gain, Envelope, Panner,
+    Gain, Envelope, Panner, Follower,
     Reverb, FeedbackDelay, Distortion, Chorus,
-    Split,
+    Split, 
     type FilterRollOff,
     FeedbackCombFilter
 } from 'tone'
@@ -116,6 +116,14 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             node.connect(gainNode);
             return gainNode;
         },
+    },
+
+    metering: {
+        follower: (node: AudioSignal, smoothing: ControlSignal = 0.1): ControlSignal => {
+            const follower = new Follower(toNumber(smoothing));
+            node.connect(follower);
+            return follower;
+        }
     },
 
     filters: {
