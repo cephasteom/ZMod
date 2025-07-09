@@ -24,11 +24,11 @@ export const outputChannels = (new Merge({channels: destination.maxChannelCount}
 export const feedbackChannels = new Split({channels: destination.maxChannelCount})
 outputChannels.connect(feedbackChannels)
 
-// const gain = new Gain(1)
-// gain.connect(outputChannels,0,0)
+const gain = new Gain(1)
+gain.connect(outputChannels,0,0)
 
-// const player = new Player("https://tonejs.github.io/audio/berklee/gong_1.mp3")
-// // play as soon as the buffer is loaded
-// player.autostart = true;
-// player.loop = true;
-// player.connect(gain)
+const player = new Player("https://tonejs.github.io/audio/berklee/gong_1.mp3")
+// play as soon as the buffer is loaded
+player.autostart = true;
+player.loop = true;
+player.connect(gain)
