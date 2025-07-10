@@ -1,6 +1,7 @@
-// TODO: AudioInput
-// TODO: External signals - how can plug in other streams to this one? Follower, etc.
-// TODO: synced signals....lfos....
+// TODO: set multichannel output regardless of the number of channels so we can feebdack signals into the graph
+// TODO: out should be able to handle mono and stereo signals
+// TODO: synced signals
+// TODO: stack breaks things: stack(sine().out(0),sine(200).out(1))
 
 import { 
     Signal, Abs, Add, Subtract, GreaterThan, GreaterThanZero, Multiply, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp,
@@ -121,7 +122,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     },
 
     metering: {
-        follow: (node: AudioSignal, smoothing: ControlSignal = 0.001): ControlSignal => {
+        follow: (node: AudioSignal, smoothing: ControlSignal = 0.01): ControlSignal => {
             const follower = new Follower(toNumber(smoothing));
             const signal = new Signal();
             node.connect(follower);
@@ -214,6 +215,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             const output = new Gain(1);
             node.connect(output)
             
+            // TODO: check if node is mono or stereo
             // split the output into two channels
             const split = new Split(2);
             output.connect(split);

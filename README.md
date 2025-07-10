@@ -246,7 +246,14 @@ Chorus effect.
 ## Metering
 ---
 ### follow
-<!-- TODO -->
+Envelope follower. In this example, we use the amplitude of the signal in the left channel to modulate the pitch of signal in the right channel.
+
+```ts
+stack(
+    sine(100).amp(lfo()).out(0),
+    sine(fb(0).follow().multiply(1000).add(100)).amp(0.5).out(1),
+)
+```
 
 ## Routing
 
@@ -270,7 +277,7 @@ sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(0) // uses channels 0 and 1
 sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(2) // use channels 2 and 3... etc.
 ```
 ### fb
-<!-- TODO -->
+
 
 ### stack
 `(...nodes: AudioSignal[]): AudioSignal`
