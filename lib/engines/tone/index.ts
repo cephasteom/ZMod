@@ -203,35 +203,43 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             node.connect(panner);
             return panner;
         },
-
-        fb: (...channels: number[]): AudioSignal => {
-            const merge = new Merge({channels: channels.length});
-            const delay = new Delay(0.01); // 10 ms delay - otherwise we get a feedback loop and the audio will not play
-            
-            channels.forEach((ch, i) => outputs.connect(merge, ch, i));
-
-            merge.connect(delay);
-            return delay;
-        },
     
-        out: (node: AudioSignal, ...channels: number[]): AudioSignal => {
-            const output = new Gain(1);
-            node.connect(output)
-
-            // If no channels are specified, use the first two channels
-            channels = channels.length > 0
-                ? channels
-                : [0,1]
+        out: (node: AudioSignal | number, ...channels: number[]): AudioSignal => {
+            // If the node is a number, we assume it's actually a channel number
+            // and we use out() as an audio source
+            if (typeof node === 'number') {
+                channels.unshift(node); // Add the channel number to the front of the channels array
             
-            // split the output into mono channels
-            const split = new Split(channels.length);
-            output.connect(split);
-            
-            // connect each mono channel to the output bus
-            channels.forEach((ch, i) => split.connect(outputBus, i, ch));
+                const merge = new Merge({channels: channels.length});
+                const delay = new Delay(0.01); // 10 ms delay - otherwise we get a feedback loop and the audio will not play
+                
+                channels.forEach((ch, i) => outputs.connect(merge, ch, i));
 
-            // return the gain node so that we can control the volume
-            return output
+                merge.connect(delay);
+                return delay;
+                
+            // else if the node is an AudioSignal
+            // we connect it to the output bus
+            } else {
+                const output = new Gain(1);
+                node.connect(output)
+    
+                // If no channels are specified, use the first two channels
+                channels = channels.length > 0
+                    ? channels
+                    : [0,1]
+                
+                // split the output into mono channels
+                const split = new Split(channels.length);
+                output.connect(split);
+                
+                // connect each mono channel to the output bus
+                channels.forEach((ch, i) => split.connect(outputBus, i, ch));
+    
+                // return the gain node so that we can control the volume
+                return output
+            }
+
         },
 
         stack: (...nodes: AudioSignal[]): AudioSignal => {

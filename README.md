@@ -269,14 +269,24 @@ fm(100).pan(lfo(0.5,-1,1)).out()
 ### out
 `AudioSignal.out(...channels: number[]): AudioSignal`
 
-Connects the signal to the output bus at the given channel(s). You can route to any outputs that your sound device has. All audio graphs are mono until you use `pan()`.
+When used as a method, connects the signal to the output bus at the given channel(s). All audio sources are mono until you use `pan()`.
 
 ```ts
-sine(200).amp(0.5).out() // uses channels 0 and 1 by default
+sine(200).amp(0.5).out() // uses channels 0 and 1 by default, but you only hear 1 channel
+sine(200).amp(0.5).pan().out() // now you hear 2.
 sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(0,1) // uses channels 0 and 1
 sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(2,3) // use channels 2 and 3... etc.
 ```
-### fb
+
+`out(...channels: number[]): AudioSignal`
+
+When used as a function, out() returns the given outputs to be re-routed back into the audio graph. A 10ms delay is applied to prevent feedback.
+```ts
+stack(
+    sine(100).out(0), // mono sine routed to left channel
+    out(0).out(1) // use channel 1 as an input and route to right channel
+)
+```
 
 
 ### stack
