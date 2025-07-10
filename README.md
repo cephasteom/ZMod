@@ -198,7 +198,9 @@ Creates a `ControlSignal` controlled by an adsr envelope (all time values in mil
 ```ts
 sine(100).amp(env()).out()
 ```
+
 Envelopes must be triggered from outside the patch. See [Basic Usage](#basic-usage) above.
+
 ---
 
 ## Modifiers
