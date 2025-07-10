@@ -7,26 +7,27 @@ TODO:
 * `ZM.start()` starts the transport
 * `ZM.stop()` stops the transport, letting any reverb tail die away
 * `ZM.clear()` disposes of all nodes
+* Improve external control - integrate into Zen for this.
 
 ## Basic Usage
 ```js
-const ZM = new ZMod()
-// TODO
-ZM.connect() // to destination
-ZM.connect(destination, [0,1]) // dest, channels
+const ZM = new ZMod() 
 
 // pass a line of the Zen Modular scripting language
 ZM.set(`sine(100).amp(env(0.1,0.1,0.5,0.8)).pan().out()`)
-// start the patch
-ZM.start()
-// clear patch and dispose of all resources
-ZM.clear()
+ZM.start() // start the transport
+ZM.stop() // stop the transport
+ZM.clear() // clear patch and dispose of all resources
+```
 
-// optionally, pass a string (with or without quotes) as the first argument of a node
-ZM.set(`sine(sig(freq)).amp(env(e)).pan().out()`)
-// making the node controllable from outside the patch
+## External Control
+```js
+// pass a string (with or without quotes) as the first argument of a node...
+ZM.set(`sine(sig(f)).amp(env(e)).pan().out()`)
+
+// ...to make the node controllable from outside the patch
 console.log(ZM.inputs)
-// returns {e: ƒ(), freq: ƒ()}
+// returns {e: ƒ(), f: ƒ()}
 
 // interact with patch whilst it is running
 ZM.inputs.e() // trigger envelope
@@ -37,7 +38,13 @@ ZM.clear()
 ```
 
 ## Routing
-<!-- TODO -->
+<!-- TODO: 32 channel audio bus -->
+```ts
+const ZM = new ZMod() // by default connects to destination
+// TODO
+ZM.disconnect() // clear routing
+ZM.connect(destination, [0,1], [0,1]) // dest / node, outputs, inputs
+```
 
 ## Signals
 
