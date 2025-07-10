@@ -28,6 +28,7 @@ import {
     makeLfo, 
     makeFilter
 } from './factories';
+import { channel } from 'diagnostics_channel';
 
 export type { Patch } from "./tone.d.ts";
 
@@ -213,18 +214,23 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             return delay;
         },
     
-        out: (node: AudioSignal, channel: number = 0): AudioSignal => {
+        out: (node: AudioSignal, ...channels: number[]): AudioSignal => {
             const output = new Gain(1);
             node.connect(output)
+
+            // If no channels are specified, use the first two channels
+            channels = channels.length > 0
+                ? channels
+                : [0,1]
             
-            // TODO: check if node is mono or stereo
-            // split the output into two channels
-            const split = new Split(2);
+            // split the output into mono channels
+            const split = new Split(channels.length);
             output.connect(split);
             
-            // then connect these channels to the main audio multi-channel output
-            split.connect(outputBus, 0, (channel % outputBus.numberOfInputs))
-            split.connect(outputBus, 1, ((channel + 1) % outputBus.numberOfInputs))
+            // connect each mono channel to the output bus
+            channels.forEach((ch, i) => split.connect(outputBus, i, ch));
+
+            // return the gain node so that we can control the volume
             return output
         },
 
@@ -293,8 +299,6 @@ function formatInputs(inputs: Record<string, Signal | Param | Envelope>): Record
 // Patch creation
 export const makePatch = (code: string): Patch => {
     onDisposeFns = []; // Reset dispose functions
-
-    console.log(code)
     
     const result = new Function(
         ...Object.keys(library), 
