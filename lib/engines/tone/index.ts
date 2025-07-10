@@ -1,5 +1,3 @@
-// TODO: set multichannel output regardless of the number of channels so we can feebdack signals into the graph
-// TODO: out should be able to handle mono and stereo signals
 // TODO: synced signals
 
 import { 

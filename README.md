@@ -1,18 +1,29 @@
 # ZMod
+TODO:
+* expose output bus through the class and provide connect() method. Without args, just to destination.
+* make tone library a class
+* Install typedocs and generate docs from library
+* signals synced to transport
+* `ZM.start()` starts the transport
+* `ZM.stop()` stops the transport, letting any reverb tail die away
+* `ZM.clear()` disposes of all nodes
 
 ## Basic Usage
 ```js
 const ZM = new ZMod()
+// TODO
+ZM.connect() // to destination
+ZM.connect(destination, [0,1]) // dest, channels
 
 // pass a line of the Zen Modular scripting language
-ZM.set(`sine(100).amp(env(0.1,0.1,0.5,0.8)).out(0)`)
+ZM.set(`sine(100).amp(env(0.1,0.1,0.5,0.8)).pan().out()`)
 // start the patch
 ZM.start()
 // clear patch and dispose of all resources
 ZM.clear()
 
 // optionally, pass a string (with or without quotes) as the first argument of a node
-ZM.set(`sine(sig(freq)).amp(env(e)).out(0)`)
+ZM.set(`sine(sig(freq)).amp(env(e)).pan().out()`)
 // making the node controllable from outside the patch
 console.log(ZM.inputs)
 // returns {e: ƒ(), freq: ƒ()}
@@ -24,6 +35,9 @@ ZM.inputs.f(1000, 1000) // ramp frequency to 1000Hz over 1s
 // clear patch and dispose of all resources
 ZM.clear()
 ```
+
+## Routing
+<!-- TODO -->
 
 ## Signals
 
