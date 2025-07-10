@@ -1,7 +1,6 @@
 // TODO: set multichannel output regardless of the number of channels so we can feebdack signals into the graph
 // TODO: out should be able to handle mono and stereo signals
 // TODO: synced signals
-// TODO: stack breaks things: stack(sine().out(0),sine(200).out(1))
 
 import { 
     Signal, Abs, Add, Subtract, GreaterThan, GreaterThanZero, Multiply, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp,
@@ -13,11 +12,11 @@ import {
     Split, 
     type FilterRollOff,
     FeedbackCombFilter,
-    Meter,
-    Delay
+    Delay,
+    Merge
 } from 'tone'
 
-import { outputChannels, feedbackChannels } from './audio';
+import { outputBus, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
 import { assignOrConnect, toNumber } from './helpers';
 import { 
@@ -29,7 +28,6 @@ import {
     makeLfo, 
     makeFilter
 } from './factories';
-import { on } from 'events';
 
 export type { Patch } from "./tone.d.ts";
 
@@ -205,13 +203,13 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             return panner;
         },
 
-        // TODO: convert delay time to ms
-        fb: (channel: number = 0, delayTime: ControlSignal = 0.01): AudioSignal => {
-            const output = new Gain(1);
-            const delay = new Delay(Math.max(0.01, toNumber(delayTime))); // 10 ms delay - otherwise we get a feedback loop and the audio will not play
-            feedbackChannels.connect(output, channel, 0);
-            assignOrConnect(delay.delayTime, delayTime);
-            output.connect(delay);
+        fb: (...channels: number[]): AudioSignal => {
+            const merge = new Merge({channels: channels.length});
+            const delay = new Delay(0.01); // 10 ms delay - otherwise we get a feedback loop and the audio will not play
+            
+            channels.forEach((ch, i) => outputs.connect(merge, ch, i));
+
+            merge.connect(delay);
             return delay;
         },
     
@@ -225,8 +223,8 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             output.connect(split);
             
             // then connect these channels to the main audio multi-channel output
-            split.connect(outputChannels, 0, (channel % outputChannels.numberOfInputs))
-            split.connect(outputChannels, 1, ((channel + 1) % outputChannels.numberOfInputs))
+            split.connect(outputBus, 0, (channel % outputBus.numberOfInputs))
+            split.connect(outputBus, 1, ((channel + 1) % outputBus.numberOfInputs))
             return output
         },
 
@@ -295,6 +293,8 @@ function formatInputs(inputs: Record<string, Signal | Param | Envelope>): Record
 // Patch creation
 export const makePatch = (code: string): Patch => {
     onDisposeFns = []; // Reset dispose functions
+
+    console.log(code)
     
     const result = new Function(
         ...Object.keys(library), 
