@@ -12,7 +12,7 @@ if (localStorage.getItem("zmod-code")) {
 const zm = new ZMod()
 
 nodesDisplay.innerHTML = Object.entries(zm.libraryKeys)
-    .filter(([category, nodes]) => category !== "core")
+    .filter(([category, _]) => category !== "core")
     .map(([category, nodes]) => `<p><strong>${category}</strong>: ${nodes.join(", ")}</p>`)
     .join("")
 

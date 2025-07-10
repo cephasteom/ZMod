@@ -29,8 +29,12 @@ import {
     makeLfo, 
     makeFilter
 } from './factories';
+import { on } from 'events';
 
 export type { Patch } from "./tone.d.ts";
+
+// TODO: to class:
+let onDisposeFns: (() => void)[] = [];
 
 // Library
 const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
@@ -211,7 +215,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             return delay;
         },
     
-        out: (node: AudioSignal, channel: number = 0) => {
+        out: (node: AudioSignal, channel: number = 0): AudioSignal => {
             const output = new Gain(1);
             node.connect(output)
             
@@ -231,7 +235,13 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
                 throw new Error("No nodes provided to stack");
             }
             const output = new Gain(1);
-            nodes.forEach(node => node.connect(output))
+            nodes.forEach(node => {
+                node.connect(output)
+                onDisposeFns.push(() => {
+                    node.gain?.rampTo(0, 0.1); // Fade out volume
+                    setTimeout(() => node.dispose(), 1000);
+                });
+            })
             return output;
         }
     }
@@ -284,6 +294,8 @@ function formatInputs(inputs: Record<string, Signal | Param | Envelope>): Record
 
 // Patch creation
 export const makePatch = (code: string): Patch => {
+    onDisposeFns = []; // Reset dispose functions
+    
     const result = new Function(
         ...Object.keys(library), 
         code
@@ -297,6 +309,7 @@ export const makePatch = (code: string): Patch => {
         inputs: formatInputs(inputs || {}),
         dispose: () => {
             result.output?.gain?.rampTo(0, 0.1); // Fade out volume
+            onDisposeFns.forEach(fn => fn());
             setTimeout(() => result.output?.dispose?.(), 1000); // Allow time for fade out
         }
     }
