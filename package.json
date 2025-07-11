@@ -1,5 +1,5 @@
 {
-  "name": "zen-blocks",
+  "name": "zmod",
   "version": "1.0.0",
   "description": "A DSP library for generating audiographs from higher level audio components. Built with RNBO, and for zen.cephasteom.co.uk. But hopefully useful elsewhere.",
   "author": "CephasTeom",
@@ -7,22 +7,24 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/zen-blocks.es.js",
-  "module": "./dist/zen-blocks.es.js",
+  "main": "./dist/zmod.es.js",
+  "module": "./dist/zmod.es.js",
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/zen-blocks.es.js",
-      "require": "./dist/zen-blocks.umd.js"
+      "import": "./dist/zmod.es.js",
+      "require": "./dist/zmod.umd.js"
     }
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docs": "npx typedoc --name ZMod"
   },
   "devDependencies": {
     "@types/node": "^24.0.10",
+    "typedoc": "^0.28.7",
     "typescript": "^5.8.3",
     "vite": "^7.0.0"
   },

@@ -1,5 +1,3 @@
-// TODO: synced signals
-
 import { 
     Signal, Abs, Add, Subtract, GreaterThan, GreaterThanZero, Multiply, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp,
     Param, 
@@ -7,11 +5,10 @@ import {
     Noise,
     Gain, Envelope, Panner, Follower,
     Reverb, FeedbackDelay, Distortion, Chorus,
-    Split, 
-    type FilterRollOff,
+    Split, Merge,
     FeedbackCombFilter,
     Delay,
-    Merge
+    type FilterRollOff,
 } from 'tone'
 
 import { outputBus, outputs } from './audio';
@@ -26,7 +23,6 @@ import {
     makeLfo, 
     makeFilter
 } from './factories';
-import { channel } from 'diagnostics_channel';
 
 export type { Patch } from "./tone.d.ts";
 

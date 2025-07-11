@@ -1,5 +1,4 @@
-# ZMod
-TODO:
+## TODO
 * expose output bus through the class and provide connect() method. Without args, just to destination.
 * make tone library a class
 * Install typedocs and generate docs from library
@@ -7,6 +6,7 @@ TODO:
 * `ZM.start()` starts the transport
 * `ZM.stop()` stops the transport, letting any reverb tail die away
 * `ZM.clear()` disposes of all nodes
+* pan to take values between 0 and 1
 * Improve external control - integrate into Zen for this.
 
 ## Basic Usage
@@ -292,7 +292,7 @@ fm(100).pan(lfo(0.5,-1,1)).out()
 ### out
 `AudioSignal.out(...channels: number[]): AudioSignal`
 
-When used as a method, connects the signal to the output bus at the given channel(s). All audio sources are mono until you use `pan()`.
+When used as a method, connects the parent node to the output bus at the given channel(s). All audio sources are mono until you use `pan()`.
 
 ```ts
 sine(200).amp(0.5).out() // uses channels 0 and 1 by default, but you only hear 1 channel
@@ -303,7 +303,7 @@ sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(2,3) // use channels 2 and 3... 
 
 `out(...channels: number[]): AudioSignal`
 
-When used as a function, out() returns the given outputs to be re-routed back into the audio graph. A 10ms delay is applied to prevent feedback.
+When used as a function, out() lets you use the given output(s) as a source. A 10ms delay is applied to prevent feedback.
 ```ts
 stack(
     sine(100).out(0), // mono sine routed to left channel
