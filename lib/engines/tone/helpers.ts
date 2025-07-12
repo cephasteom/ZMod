@@ -13,10 +13,10 @@ export function toNumber(value: ControlSignal): number {
     return typeof value === 'number' ? value : (value instanceof Signal ? value.value : 0);
 }
 
-export function toSignal(value: ControlSignal): Signal {
-    return value instanceof Signal 
-        ? value 
-        : new Signal(toNumber(value));
+export function toControlSignal(value: ControlSignal): Signal {
+    return typeof value === 'number' 
+        ? new Signal(value)
+        : value 
 }
 
 export function toRolloff(value: ControlSignal): FilterRollOff {
