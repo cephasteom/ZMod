@@ -105,7 +105,9 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             attack /= 1000;
             decay /= 1000;
             release /= 1000;
-            return new Envelope({attack, decay, sustain, release});
+            const env = new Envelope({attack, decay, sustain, release});
+            console.log(env)
+            return env
         },
     },
 

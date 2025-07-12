@@ -1,6 +1,7 @@
 import { Merge } from "tone";
 import { library, libraryKeys, makePatch, type Patch, outputBus } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
+import { TransportClass } from "tone/build/esm/core/clock/Transport";
 
 /**
  * ZMod class that represents a modular audio synthesis environment.
@@ -19,6 +20,11 @@ export default class ZMod {
      * AudioContext to use. Currently not used, but there for future compatibility.
      */
     _context?: AudioContext;
+
+    /**
+     * Transport to use. Currently not used, but there for future compatibility.
+     */
+    _transport?: TransportClass;
 
     /**
      * A 32 channel output bus that merges all audio outputs into a single stream.
@@ -54,9 +60,11 @@ e current audio patch created from the transpiled cod/tonee.
      */
     libraryKeys: Record<string, string[]> = libraryKeys;
 
-    constructor(context?: AudioContext) {
-        // TODO: use the context in the patch
+    constructor(
+        {context, transport}: {context?: AudioContext, transport?: TransportClass}
+    ) {
         this._context = context;
+        this._transport = transport;
         // Load the library of Nodes 
         // loaded internally so that we might swap out tone.js for another library in future
         this.loadNodes(library)

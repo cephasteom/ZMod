@@ -4,8 +4,8 @@
 * `ZM.start()` starts the transport
 * `ZM.stop()` stops the transport, letting any reverb tail die away
 * `ZM.clear()` disposes of all nodes
-* pan to take values between 0 and 1
 * Improve external control - integrate into Zen for this.
+* Use existing context and/or transport
 
 ## Basic Usage
 ```js
