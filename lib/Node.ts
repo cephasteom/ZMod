@@ -10,12 +10,12 @@ export type NodeInput = Node | number;
 export class Node {
     type: string;
     inputs: Node[];
-    id?: string; // Optional identifier for the Node, useful for debugging or referencing
+    id?: string; // Optional identifier for the Node
     
     constructor(
         type: string, 
         inputs: Node[] = [],
-        id?: string // Optional identifier for the Node, useful for debugging or referencing
+        id?: string // Optional identifier for the Node
     ) {
         this.type = type;
         this.inputs = inputs;
@@ -27,9 +27,10 @@ export class Node {
      */
     toCode(node: Node, ref: string, args: any[], id?: string): string {
         let code = `let ${ref} = ${node.type}(${args.join(",")});`;
-        if (id) {
-            code += ` inputs = {...inputs, ${id}: ${ref}};`; // Add to inputs object if id is provided
-        }
+        code += id
+            ? ` inputs = {...inputs, ${id}: ${ref}};` // Add to inputs object if id is provided
+            : ''
+
         return code;
     }
 

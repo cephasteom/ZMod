@@ -61,10 +61,10 @@ e current audio patch created from the transpiled cod/tonee.
     libraryKeys: Record<string, string[]> = libraryKeys;
 
     constructor(
-        {context, transport}: {context?: AudioContext, transport?: TransportClass}
+        options: {context?: AudioContext, transport?: TransportClass}
     ) {
-        this._context = context;
-        this._transport = transport;
+        this._context = options?.context;
+        this._transport = options?.transport;
         // Load the library of Nodes 
         // loaded internally so that we might swap out tone.js for another library in future
         this.loadNodes(library)
