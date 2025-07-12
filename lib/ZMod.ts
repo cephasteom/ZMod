@@ -164,12 +164,13 @@ e current audio patch created from the transpiled cod/tonee.
     }
 
     /**
-     * 
+     * Connect Zmod's output bus to an AudioNode.
+     * This allows you to route the audio output to any AudioNode in the Web Audio API
+     * @param args The AudioNode to connect to, and optional output and input indices.
+     * @returns The ZMod instance for method chaining.
      */
     connect(...args: [AudioNode, number?, number?]): ZMod {
         this._output.connect(...args);
         return this;
     }
-
-
 }
