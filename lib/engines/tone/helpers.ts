@@ -11,7 +11,13 @@ export function assignOrConnect(target: Signal<any> | Param<any>, value: Control
 
 export function toNumber(value: ControlSignal): number {
     return typeof value === 'number' ? value : (value instanceof Signal ? value.value : 0);
-}   
+}
+
+export function toSignal(value: ControlSignal): Signal {
+    return value instanceof Signal 
+        ? value 
+        : new Signal(toNumber(value));
+}
 
 export function toRolloff(value: ControlSignal): FilterRollOff {
     const rolloff = toNumber(value);

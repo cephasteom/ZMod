@@ -13,7 +13,7 @@ import {
 
 import { outputBus, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
-import { assignOrConnect, toNumber } from './helpers';
+import { assignOrConnect, toSignal, toNumber } from './helpers';
 import { 
     makeOsc, 
     makeFm, 
@@ -192,8 +192,13 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
 
     routing: {
         pan: (node: AudioSignal, value: ControlSignal = 0): AudioSignal => {
-            const panner = new Panner(toNumber(value));
-            assignOrConnect(panner.pan, value);
+            // ensure value is a Signal
+            const sig = toSignal(value);
+            // scale the value to -1 to 1 so we can use 0 - 1 for panning
+            const scale = new Scale(-1, 1)
+            const scaled = sig.connect(scale);
+            const panner = new Panner(toNumber(scaled));
+            assignOrConnect(panner.pan, scaled);
             node.connect(panner);
             return panner;
         },

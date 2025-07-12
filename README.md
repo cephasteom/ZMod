@@ -1,5 +1,4 @@
 ## TODO
-* expose output bus through the class and provide connect() method. Without args, just to destination.
 * REmove typedocs. Parse REadme as JSON, inject into Vite and generate docs that way
 * signals synced to transport
 * `ZM.start()` starts the transport
