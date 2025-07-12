@@ -1,4 +1,5 @@
-import { library, libraryKeys, makePatch, type Patch } from "./engines/tone";
+import { Merge } from "tone";
+import { library, libraryKeys, makePatch, type Patch, outputBus } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 
 /**
@@ -17,30 +18,35 @@ export default class ZMod {
     /**
      * AudioContext to use. Currently not used, but there for future compatibility.
      */
-    context?: AudioContext;
+    _context?: AudioContext;
+
+    /**
+     * A 32 channel output bus that merges all audio outputs into a single stream.
+     */
+    _output: Merge = outputBus;
     
     /**
      * A collection of Nodes that can be used in the ZMod environment.
      * These are dynamically registered from a provided library - meaning we can change synth engine in future.
      */
-    nodes: Record<string, (id: string, ...args: NodeInput[]) => Node> = {};
+    _nodes: Record<string, (id: string, ...args: NodeInput[]) => Node> = {};
     
     /**
      * The ZMod scripting language transpiled to JavaScript.
      */ 
-    transpiledCode: string = '';
+    _transpiledCode: string = '';
     
     /**
      * The current audio patch created from the transpiled code.
 e current audio patch created from the transpiled cod/tonee.
      * Contains the inputs and output of the audio graph, and a dispose method to clean up resources.
      */
-    patch?: Patch | null;
+    _patch?: Patch | null;
     
     /**
      * Flag to indicate if the current patch is new or has changed since the last run.
      */
-    isNewPatch: boolean = false;
+    _isNewPatch: boolean = false;
 
     /**
      * Library Keys - a list of categorised Node types available in the ZMod environment.
@@ -50,7 +56,7 @@ e current audio patch created from the transpiled cod/tonee.
 
     constructor(context?: AudioContext) {
         // TODO: use the context in the patch
-        this.context = context;
+        this._context = context;
         // Load the library of Nodes 
         // loaded internally so that we might swap out tone.js for another library in future
         this.loadNodes(library)
@@ -61,10 +67,10 @@ e current audio patch created from the transpiled cod/tonee.
      * This method registers the Nodes from the provided library
      * @param library 
      */
-    loadNodes(library: Record<string, (...args: any[]) => Node>) {
+    private loadNodes(library: Record<string, (...args: any[]) => Node>) {
         // flatten object so we just get the inner objects containing the node functions
         
-        this.nodes = Object.keys(library)
+        this._nodes = Object.keys(library)
             .reduce((acc, type) => {
                 acc[type] = registerNode(type);
                 return acc;
@@ -96,15 +102,15 @@ e current audio patch created from the transpiled cod/tonee.
     set(code: string): ZMod {
         try {
             const nodes = new Function(
-                ...Object.keys(this.nodes), 
+                ...Object.keys(this._nodes), 
                 `return (${this.parseCode(code)});`
-            )(...Object.values(this.nodes));
+            )(...Object.values(this._nodes));
 
             const script = nodes.toScript();
             const transpiled = `let inputs = {};\n${script.lines.join("\n")}\nreturn {inputs, output: ${script.last}};`;
 
-            this.isNewPatch = (transpiled !== this.transpiledCode);
-            this.transpiledCode = transpiled;
+            this._isNewPatch = (transpiled !== this._transpiledCode);
+            this._transpiledCode = transpiled;
         } catch (error) {
             console.error("Error during transpilation:", error);
         }
@@ -117,7 +123,7 @@ e current audio patch created from the transpiled cod/tonee.
      * These are the controllable parameters of the audio graph.
      */
     get inputs() {
-        return this.patch?.inputs || {};
+        return this._patch?.inputs || {};
     }
 
     /**
@@ -125,11 +131,11 @@ e current audio patch created from the transpiled cod/tonee.
      */
     start(): ZMod {
         // Don't create a new patch if the code hasn't changed
-        if(!this.isNewPatch || !this.transpiledCode) return this
+        if(!this._isNewPatch || !this._transpiledCode) return this
         
         try {
-            this.patch?.dispose();
-            this.patch = makePatch(this.transpiledCode);
+            this._patch?.dispose();
+            this._patch = makePatch(this._transpiledCode);
         } catch (error) {
             console.error("Error compiling code:", error);
         }
@@ -141,10 +147,29 @@ e current audio patch created from the transpiled cod/tonee.
      * Clears the current audio patch and resets the state.
      * You need to parse more code before you can run it again.
      */
-    clear() {
-        this.patch?.dispose(); // Dispose of the current patch if it exists
-        this.patch = null; // Clear the graph reference
-        this.transpiledCode = ''; // Reset the last transpiled code
-        this.isNewPatch = false; // Reset the new patch flag so that we can play the same code again
+    clear(): ZMod {
+        this._patch?.dispose(); // Dispose of the current patch if it exists
+        this._patch = null; // Clear the graph reference
+        this._transpiledCode = ''; // Reset the last transpiled code
+        this._isNewPatch = false; // Reset the new patch flag so that we can play the same code again
+        return this;
     }
+
+    /**
+     * Disconnects ZMod's output bus.
+     */
+    disconnect(): ZMod {
+        this._output.disconnect();
+        return this;
+    }
+
+    /**
+     * 
+     */
+    connect(...args: [AudioNode, number?, number?]): ZMod {
+        this._output.connect(...args);
+        return this;
+    }
+
+
 }

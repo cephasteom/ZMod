@@ -1,7 +1,6 @@
 ## TODO
 * expose output bus through the class and provide connect() method. Without args, just to destination.
-* make tone library a class
-* Install typedocs and generate docs from library
+* REmove typedocs. Parse REadme as JSON, inject into Vite and generate docs that way
 * signals synced to transport
 * `ZM.start()` starts the transport
 * `ZM.stop()` stops the transport, letting any reverb tail die away

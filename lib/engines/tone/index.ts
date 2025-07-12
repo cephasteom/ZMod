@@ -25,8 +25,8 @@ import {
 } from './factories';
 
 export type { Patch } from "./tone.d.ts";
+export { outputBus } from './audio';
 
-// TODO: to class:
 let onDisposeFns: (() => void)[] = [];
 
 // Library
