@@ -27,7 +27,15 @@ import {
 export type { Patch } from "./tone.d.ts";
 export { outputBus } from './audio';
 
+
+
 let onDisposeFns: (() => void)[] = [];
+let onStopFns: (() => void)[] = [];
+
+const addToOnStop = (node: AudioSignal) => (fn: () => void) => {
+    onStopFns.push(fn);
+    return node;
+}
 
 // Library
 const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
@@ -220,7 +228,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             // else if the node is an AudioSignal
             // we connect it to the output bus
             } else {
-                const output = new Gain(1);
+                const output = new Gain(0);
                 node.connect(output)
     
                 // If no channels are specified, use the first two channels
@@ -313,15 +321,14 @@ export const makePatch = (code: string): Patch => {
     )(...Object.values(library))
     
     const { inputs, output } = result;
-    
-    output?.gain?.rampTo(1, 0.1);
 
     return {
         inputs: formatInputs(inputs || {}),
+        output,
         dispose: () => {
-            result.output?.gain?.rampTo(0, 0.1); // Fade out volume
+            result.output?.gain?.rampTo(0, 0.5); // Fade out volume
             onDisposeFns.forEach(fn => fn());
-            setTimeout(() => result.output?.dispose?.(), 1000); // Allow time for fade out
+            setTimeout(() => output?.dispose?.(), 1000); // Allow time for fade out
         }
     }
 }

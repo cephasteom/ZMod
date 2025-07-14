@@ -9,7 +9,7 @@ import { ControlSignal, AudioSignal } from './tone';
 import { assignOrConnect, toNumber, toRolloff } from './helpers';
 
 export function makeOsc(type: ToneOscillatorType, freq: ControlSignal = 220): AudioSignal {
-    const osc = new Oscillator(220, type).sync().start(0)
+    const osc = new Oscillator(220, type).start()
     assignOrConnect(osc.frequency, freq)
     return osc
 }
@@ -20,7 +20,7 @@ export function makeFm(
     carrier: ToneOscillatorType = 'sine', 
     modulator: ToneOscillatorType = 'sine'
 ): AudioSignal {
-    const fmOsc = new FMOscillator(220, carrier, modulator).sync().start(0);
+    const fmOsc = new FMOscillator(220, carrier, modulator).start();
     assignOrConnect(fmOsc.frequency, frequency);
     assignOrConnect(fmOsc.harmonicity, harmonicity);
     assignOrConnect(fmOsc.modulationIndex, modulationIndex);
@@ -33,7 +33,7 @@ export function makeAm(
     carrier: ToneOscillatorType = 'sine',
     modulator: ToneOscillatorType = 'sine'
 ): AudioSignal {
-    const amOsc = new AMOscillator(220, carrier, modulator).sync().start(0);
+    const amOsc = new AMOscillator(220, carrier, modulator).start();
     assignOrConnect(amOsc.frequency, frequency);
     assignOrConnect(amOsc.harmonicity, harmonicity);
     return amOsc;
@@ -43,7 +43,7 @@ export function makePwm(
     frequency: ControlSignal = 220, 
     modulationFrequency: ControlSignal = 0.5,
 ): AudioSignal {
-    const pwmOsc = new PWMOscillator(220).sync().start(0);
+    const pwmOsc = new PWMOscillator(220).start();
     assignOrConnect(pwmOsc.frequency, frequency);
     assignOrConnect(pwmOsc.modulationFrequency, modulationFrequency);
     return pwmOsc;
@@ -54,7 +54,7 @@ export function makeFat(
     spread: ControlSignal = 10, // spread in cents
     type: ToneOscillatorType = 'sine'
 ): AudioSignal {
-    const osc = new FatOscillator(220, type, toNumber(spread)).sync().start(0);
+    const osc = new FatOscillator(220, type, toNumber(spread)).start();
     assignOrConnect(osc.frequency, frequency);
     return osc;
 }
@@ -80,7 +80,7 @@ export function makeLfo(
     min: ControlSignal = 0, 
     max: ControlSignal = 1
 ): ControlSignal {
-    const lfo = new LFO({min: toNumber(min), max: toNumber(max), type}).sync().start(0)
+    const lfo = new LFO({min: toNumber(min), max: toNumber(max), type}).sync().start()
     assignOrConnect(lfo.frequency, frequency)
     return lfo
 }

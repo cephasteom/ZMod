@@ -15,5 +15,6 @@ export type AudioSignal = Oscillator | FMOscillator | AMOscillator | PWMOscillat
 export type ControlSignal = number | Signal | LFO | Envelope | Follower | Param | Meter | Follower;
 export interface Patch {
     inputs: Record<string, (...args: any[]) => void>
+    output?: AudioSignal | Gain;
     dispose: () => void
 }

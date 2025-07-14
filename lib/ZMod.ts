@@ -140,12 +140,12 @@ e current audio patch created from the transpiled cod/tonee.
      */
     start(): ZMod {
         // Don't create a new patch if the code hasn't changed
-        
         try {
             if(this._isNewPatch) {
                 this._patch?.dispose();
                 this._patch = makePatch(this._transpiledCode);
             }
+            this._patch?.output?.gain?.rampTo(1, 0.1); // Fade in volume
             this._transport?.start();
         } catch (error) {
             console.error("Error compiling code:", error);
@@ -160,6 +160,7 @@ e current audio patch created from the transpiled cod/tonee.
      */
     stop(): ZMod {
         this._transport?.stop();
+        this._patch?.output?.gain?.rampTo(0, 0.1); // Fade out volume
         return this
     }
         

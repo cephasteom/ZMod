@@ -1,10 +1,11 @@
 ## TODO
-* Remove typedocs. Parse REadme as JSON, inject into Vite and generate docs that way
-* signals synced to transport
+Zen integration
+* pan isn't scaled correctly
+* pan make a bad noise when we change the logic
+* we have to restart the transport for anything to get going...
+
 * adsr().trigger() with signals / function calls
-* `ZM.start()` starts the transport
-* `ZM.stop()` stops the transport, letting any reverb tail die away
-* `ZM.clear()` disposes of all nodes
+With Zen
 * Improve external control - integrate into Zen for this.
 * Use existing context and/or transport
 
