@@ -204,9 +204,9 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             const sig = toControlSignal(value);
             // scale the value to -1 to 1 so we can use 0 - 1 for panning
             const scale = new Scale(-1, 1)
-            const scaled = sig.connect(scale);
-            const panner = new Panner(toNumber(scaled));
-            assignOrConnect(panner.pan, scaled);
+            sig.connect(scale);
+            const panner = new Panner(toNumber(scale));
+            assignOrConnect(panner.pan, scale);
             node.connect(panner);
             return panner;
         },

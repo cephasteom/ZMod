@@ -1,16 +1,18 @@
 import { ControlSignal } from './tone';
-import { Signal, Param, LFO, FilterRollOff, Envelope, Follower, Gain } from 'tone';
+import { Signal, Param, LFO, FilterRollOff, Envelope, Follower, Gain, Scale } from 'tone';
 
 // Helpers
 export function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSignal): void {
     if (value === undefined) return;
-    value instanceof LFO || value instanceof Signal || value instanceof Envelope || value instanceof Follower || value instanceof Gain
+    value instanceof LFO || value instanceof Signal || value instanceof Envelope || value instanceof Follower || value instanceof Gain || value instanceof Scale
         ? value.connect(target)
         : (target as Signal | AudioParam).value = value;
 }
 
 export function toNumber(value: ControlSignal): number {
-    return typeof value === 'number' ? value : (value instanceof Signal ? value.value : 0);
+    return typeof value === 'number' 
+        ? value 
+        : (value instanceof Signal ? value.value : 0);
 }
 
 export function toControlSignal(value: ControlSignal): Signal {

@@ -1,8 +1,7 @@
 ## TODO
 Zen integration
 * pan isn't scaled correctly
-* pan make a bad noise when we change the logic
-* we have to restart the transport for anything to get going...
+* change the out logic to bus(). So we can send signals around internally, but still connect it wherever we choose.
 
 * adsr().trigger() with signals / function calls
 With Zen
