@@ -17,13 +17,8 @@ nodesDisplay.innerHTML = Object.entries(zm.libraryKeys)
     .join("")
 
 
-const start = () => {
-    zm.set(codeInput.value).start()
-    // setInterval(() => {
-    //     zm.inputs.e()
-    // }, 1000);
-}
-const stop = () => zm.clear()
+const start = () => zm.set(codeInput.value).start()
+const stop = () => zm.stop()
 
 runButton?.addEventListener("click", start);
 stopButton?.addEventListener("click", stop)

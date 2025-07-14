@@ -1,6 +1,7 @@
 ## TODO
-* REmove typedocs. Parse REadme as JSON, inject into Vite and generate docs that way
+* Remove typedocs. Parse REadme as JSON, inject into Vite and generate docs that way
 * signals synced to transport
+* adsr().trigger() with signals / function calls
 * `ZM.start()` starts the transport
 * `ZM.stop()` stops the transport, letting any reverb tail die away
 * `ZM.clear()` disposes of all nodes

@@ -1,4 +1,4 @@
-import { Merge } from "tone";
+import { Merge, getTransport, getContext, BaseContext } from "tone";
 import { library, libraryKeys, makePatch, type Patch, outputBus } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
@@ -19,7 +19,7 @@ export default class ZMod {
     /**
      * AudioContext to use. Currently not used, but there for future compatibility.
      */
-    _context?: AudioContext;
+    _context?: BaseContext = getContext();
 
     /**
      * Transport to use. Currently not used, but there for future compatibility.
@@ -61,10 +61,11 @@ e current audio patch created from the transpiled cod/tonee.
     libraryKeys: Record<string, string[]> = libraryKeys;
 
     constructor(
-        options: {context?: AudioContext, transport?: TransportClass}
+        options?: {context?: BaseContext, transport?: TransportClass}
     ) {
-        this._context = options?.context;
-        this._transport = options?.transport;
+        // Initialize the context and transport if provided, otherwise use defaults
+        this._context = options?.context || getContext();
+        this._transport = options?.transport || getTransport();
         // Load the library of Nodes 
         // loaded internally so that we might swap out tone.js for another library in future
         this.loadNodes(library)
@@ -139,11 +140,13 @@ e current audio patch created from the transpiled cod/tonee.
      */
     start(): ZMod {
         // Don't create a new patch if the code hasn't changed
-        if(!this._isNewPatch || !this._transpiledCode) return this
         
         try {
-            this._patch?.dispose();
-            this._patch = makePatch(this._transpiledCode);
+            if(this._isNewPatch) {
+                this._patch?.dispose();
+                this._patch = makePatch(this._transpiledCode);
+            }
+            this._transport?.start();
         } catch (error) {
             console.error("Error compiling code:", error);
         }
@@ -152,10 +155,20 @@ e current audio patch created from the transpiled cod/tonee.
     }
 
     /**
+     * Stop the transport, pausing the audio graph without deleting it.
+     * @returns ZMod
+     */
+    stop(): ZMod {
+        this._transport?.stop();
+        return this
+    }
+        
+    /**
      * Clears the current audio patch and resets the state.
      * You need to parse more code before you can run it again.
      */
     clear(): ZMod {
+        this._transport?.stop();
         this._patch?.dispose(); // Dispose of the current patch if it exists
         this._patch = null; // Clear the graph reference
         this._transpiledCode = ''; // Reset the last transpiled code
