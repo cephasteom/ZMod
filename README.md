@@ -1,8 +1,7 @@
 ## TODO
+* main output should be in the zmod class, not shared...
 Zen integration
-* adsr().trigger() with signals / function calls
 With Zen
-* Improve external control - integrate into Zen for this.
 * Use existing context and/or transport
 
 ## Basic Usage
@@ -24,6 +23,10 @@ ZM.set(`sine(sig(f)).amp(env(e)).pan().out()`)
 // ...to make the node controllable from outside the patch
 console.log(ZM.inputs)
 // returns {e: ƒ(), f: ƒ()}
+
+// you can also do this shorthand to create signals for external control
+ZM.set(`sine(#f).pan(#pan).out()`) // is equivalent to
+ZM.set(`sine(sig(f)).pan(sig(pan)).out()`) // this
 
 // interact with patch whilst it is running
 ZM.inputs.e() // trigger envelope

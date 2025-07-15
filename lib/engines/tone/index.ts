@@ -38,6 +38,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     // Signals
     signals: {
         sig: (value: number): Signal => new Signal(value),
+        s: (value: number): Signal => new Signal(value),
         ...Object.fromEntries([Abs, Add, Multiply, Subtract, GreaterThan, GreaterThanZero, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp].map((Class) => {
             // to lowercase and remove any _
             const name = Class.name.toLowerCase().replace(/_/g, '');
@@ -48,7 +49,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
                 signal.connect(node);
                 return node;
             }]
-        }))
+        })),
     },
 
     // AudioSignals
@@ -71,7 +72,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
         amsaw: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'sawtooth'),
         
         pulse: (freq: ControlSignal = 220, width: ControlSignal = 0.5): AudioSignal => {
-            const pulseOsc = new PulseOscillator(220, toNumber(width)).sync().start("0.1");
+            const pulseOsc = new PulseOscillator(220, toNumber(width)).sync().start("0.05");
             assignOrConnect(pulseOsc.frequency, freq);
             assignOrConnect(pulseOsc.width, width);
             return pulseOsc;
@@ -292,25 +293,15 @@ export const libraryKeys = Object.entries(nodes)
     }), {} as Record<string, string[]>);
 
 // Input functions
-const inputFns: Record<string, (node: any) => (...args: any[]) => void> = {
+const inputFns: Record<string, (node: any) => (...args: any[]) => AudioSignal> = {
     _signal: (node: any) => (value: number, time: number) => {
         node.setValueAtTime(value, time);
+        return node
     },
-    _param: (node: Signal) => (value: number, rampTime: number = 10) => {
-        node.rampTo(value, rampTime / 1000);
-    },
-    _envelope: (node: Envelope) => (
-        duration: number = 1000,
-        attack: number = 100, 
-        decay: number = 100, 
-        sustain: number = 0.8, 
-        release: number = 800
-    ) => {
-        attack /= 1000;
-        decay /= 1000;
-        release /= 1000;
-        node.set({attack, decay, sustain, release});
-        node.triggerAttackRelease(duration / 1000);
+    _envelope: (node: Envelope) => (options: { a?: number, d?: number, s?: number, r?: number }) => {
+        const { a = 100, d = 100, s = 0.8, r = 800 } = options;
+        node.set({attack: a / 1000, decay: d / 1000, sustain: s, release: r / 1000});
+        return node
     }
 }
 

@@ -101,6 +101,11 @@ e current audio patch created from the transpiled cod/tonee.
             // If the argument is a string or a variable name, wrap it in quotes
             return `${p1}'${p2}'`;
         });
+        // replace any string prepened with a # e.g. #amp wth e.g. s('amp)
+        code = code.replace(/#([a-zA-Z_][a-zA-Z0-9_]*)/g, (match, p1) => {
+            // If the argument is a string or a variable name, wrap it in quotes
+            return `s('${p1}')`;
+        });
         return code;
     }
 
@@ -145,7 +150,7 @@ e current audio patch created from the transpiled cod/tonee.
                 this._patch?.dispose();
                 this._patch = makePatch(this._transpiledCode);
             }
-            this._patch?.output?.gain?.rampTo(1, 0.1); // Fade in volume
+            this._patch?.output?.gain?.rampTo(0.25, 0.1); // Fade in volume, 0.25 is loud enough
             this._transport?.start();
         } catch (error) {
             console.error("Error compiling code:", error);
@@ -184,6 +189,30 @@ e current audio patch created from the transpiled cod/tonee.
         Object.keys(this.inputs).forEach((key: string) => 
             args[key] && this.inputs[key](args[key], time)
         )
+
+        const { dur = 1000 } = args
+
+        // handle envelopes e, e1, e2, etc.
+        const envelopes = Object.entries(args)
+            .filter(([key]) => /^([adsr])\d*$/.test(key))
+            .reduce((acc: Record<string, Record<string, number>>, [key, value]: [string, number]) => {
+                // @ts-ignore
+                const [, param, index = ''] = key.match(/^([adsr])(\d*)$/); // '' means no index → 'e'
+                return {
+                ...acc,
+                [index]: {
+                    ...(acc[index] || {}),
+                    [param]: value
+                }
+                };
+            }, {});
+
+        // Call each envelope input if it exists
+        Object.entries(envelopes)
+            .filter(([index]) => typeof this.inputs[`e${index}`] === 'function')
+            .forEach(([index, envArgs]) => {
+                this.inputs[`e${index}`](envArgs).triggerAttackRelease(dur / 1000, time);
+            });
         return this
     }
 
