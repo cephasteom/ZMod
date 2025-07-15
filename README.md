@@ -1,7 +1,5 @@
 ## TODO
 Zen integration
-* change the out logic to bus(). So we can send signals around internally, but still connect it wherever we choose.
-
 * adsr().trigger() with signals / function calls
 With Zen
 * Improve external control - integrate into Zen for this.
@@ -290,7 +288,7 @@ fm(100).pan(lfo(0.5,-1,1)).out()
 ### out
 `AudioSignal.out(...channels: number[]): AudioSignal`
 
-When used as a method, connects the parent node to the output bus at the given channel(s). All audio sources are mono until you use `pan()`.
+Connects the parent node to the output at the given channel(s). All audio sources are mono until you use `pan()`.
 
 ```ts
 sine(200).amp(0.5).out() // uses channels 0 and 1 by default, but you only hear 1 channel
@@ -299,13 +297,16 @@ sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(0,1) // uses channels 0 and 1
 sine(200).pan(lfosquare(0.5,-1,1)).amp(0.5).out(2,3) // use channels 2 and 3... etc.
 ```
 
+### Bus
+`AudioSignal.bus(...channels: number[]): AudioSignal`
+When used as method, routes the signal to the bus at a given channel, then returns the original mode.
 `out(...channels: number[]): AudioSignal`
 
-When used as a function, out() lets you use the given output(s) as a source. A 10ms delay is applied to prevent feedback.
+When used as a function, bus() uses audio routed through that bus as a source. A 10ms delay is applied to prevent feedback.
 ```ts
 stack(
-    sine(100).out(0), // mono sine routed to left channel
-    out(0).out(1) // use channel 1 as an input and route to right channel
+    sine(100).bus(0).out(0), // mono signal routed to bus 0 then played out of the left channel
+    bus(0).out(1) // bus 0 as a source, routed out of the right channel
 )
 ```
 

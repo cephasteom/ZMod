@@ -28,12 +28,6 @@ export type { Patch } from "./tone.d.ts";
 export { outputs } from './audio';
 
 let onDisposeFns: (() => void)[] = [];
-let onStopFns: (() => void)[] = [];
-
-const addToOnStop = (node: AudioSignal) => (fn: () => void) => {
-    onStopFns.push(fn);
-    return node;
-}
 
 // Library
 const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
@@ -299,10 +293,10 @@ export const libraryKeys = Object.entries(nodes)
 
 // Input functions
 const inputFns: Record<string, (node: any) => (...args: any[]) => void> = {
-    _signal: (node: any) => (value: number, rampTime: number = 100) => {
-        node.rampTo(value, rampTime / 1000);
+    _signal: (node: any) => (value: number, time: number) => {
+        node.setValueAtTime(value, time);
     },
-    _param: (node: Signal) => (value: number, rampTime: number = 100) => {
+    _param: (node: Signal) => (value: number, rampTime: number = 10) => {
         node.rampTo(value, rampTime / 1000);
     },
     _envelope: (node: Envelope) => (
