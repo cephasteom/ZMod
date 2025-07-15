@@ -79,7 +79,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
         amsaw: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'sawtooth'),
         
         pulse: (freq: ControlSignal = 220, width: ControlSignal = 0.5): AudioSignal => {
-            const pulseOsc = new PulseOscillator(220, toNumber(width)).sync().start(0);
+            const pulseOsc = new PulseOscillator(220, toNumber(width)).sync().start("0.1");
             assignOrConnect(pulseOsc.frequency, freq);
             assignOrConnect(pulseOsc.width, width);
             return pulseOsc;
