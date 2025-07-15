@@ -1,5 +1,5 @@
 import { Merge, getTransport, getContext, BaseContext } from "tone";
-import { library, libraryKeys, makePatch, type Patch, outputBus } from "./engines/tone";
+import { library, libraryKeys, makePatch, type Patch, outputs } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 
@@ -29,7 +29,7 @@ export default class ZMod {
     /**
      * A 32 channel output bus that merges all audio outputs into a single stream.
      */
-    _output: Merge = outputBus;
+    _outputs: Merge = outputs;
     
     /**
      * A collection of Nodes that can be used in the ZMod environment.
@@ -181,7 +181,7 @@ e current audio patch created from the transpiled cod/tonee.
      * Disconnects ZMod's output bus.
      */
     disconnect(): ZMod {
-        this._output.disconnect();
+        this._outputs.disconnect();
         return this;
     }
 
@@ -192,7 +192,7 @@ e current audio patch created from the transpiled cod/tonee.
      * @returns The ZMod instance for method chaining.
      */
     connect(...args: [AudioNode, number?, number?]): ZMod {
-        this._output.connect(...args);
+        this._outputs.connect(...args);
         return this;
     }
 }

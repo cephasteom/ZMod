@@ -11,7 +11,7 @@ import {
     type FilterRollOff,
 } from 'tone'
 
-import { outputBus, outputs } from './audio';
+import { busses, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
 import { assignOrConnect, toControlSignal, toNumber } from './helpers';
 import { 
@@ -25,9 +25,7 @@ import {
 } from './factories';
 
 export type { Patch } from "./tone.d.ts";
-export { outputBus } from './audio';
-
-
+export { outputs } from './audio';
 
 let onDisposeFns: (() => void)[] = [];
 let onStopFns: (() => void)[] = [];
@@ -212,8 +210,28 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
         },
     
         out: (node: AudioSignal | number, ...channels: number[]): AudioSignal => {
+            const output = new Gain(0);
+            node.connect(output)
+
+            // If no channels are specified, use the first two channels
+            channels = channels.length > 0
+                ? channels
+                : [0,1]
+            
+            // split the output into mono channels
+            const split = new Split(channels.length);
+            output.connect(split);
+            
+            // connect each mono channel to the output bus
+            channels.forEach((ch, i) => split.connect(outputs, i, ch));
+
+            // return the gain node so that we can control the volume
+            return output
+        },
+
+        bus: (node: AudioSignal, ...channels: number[]): AudioSignal => {
             // If the node is a number, we assume it's actually a channel number
-            // and we use out() as an audio source
+            // and we use bus() as an audio input
             if (typeof node === 'number') {
                 channels.unshift(node); // Add the channel number to the front of the channels array
             
@@ -226,10 +244,8 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
                 return delay;
                 
             // else if the node is an AudioSignal
-            // we connect it to the output bus
+            // we connect it to the bus as an audio output
             } else {
-                const output = new Gain(0);
-                node.connect(output)
     
                 // If no channels are specified, use the first two channels
                 channels = channels.length > 0
@@ -238,13 +254,13 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
                 
                 // split the output into mono channels
                 const split = new Split(channels.length);
-                output.connect(split);
+                node.connect(split);
                 
                 // connect each mono channel to the output bus
-                channels.forEach((ch, i) => split.connect(outputBus, i, ch));
+                channels.forEach((ch, i) => split.connect(busses, i, ch));
     
                 // return the gain node so that we can control the volume
-                return output
+                return node
             }
 
         },
@@ -255,6 +271,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             }
             const output = new Gain(1);
             nodes.forEach(node => {
+                node.gain?.rampTo(1, 0.1); // Ensure volume is turned up
                 node.connect(output)
                 onDisposeFns.push(() => {
                     node.gain?.rampTo(0, 0.1); // Fade out volume

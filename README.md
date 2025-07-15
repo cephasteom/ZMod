@@ -1,6 +1,5 @@
 ## TODO
 Zen integration
-* there's a delay when you add in an lfo, it takes a while to start...
 * change the out logic to bus(). So we can send signals around internally, but still connect it wherever we choose.
 
 * adsr().trigger() with signals / function calls
