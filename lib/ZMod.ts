@@ -97,15 +97,20 @@ e current audio patch created from the transpiled cod/tonee.
         // delete any ;
         code = code.replace(/;/g, '');
         // wrap any non-numeric function arguments in quotes. These will either be between ( and ) or ( and ,. Ignore any arguments that are numbers or functions.
-        code = code.replace(/(\(|,)([a-zA-Z_][a-zA-Z0-9_]*)(?=\)|,)/g, (match, p1, p2) => {
+        code = code.replace(/(\(|,)([a-zA-Z_][a-zA-Z0-9_]*)(?=\)|,)/g, (_, p1, p2) => {
             // If the argument is a string or a variable name, wrap it in quotes
             return `${p1}'${p2}'`;
         });
-        // replace any string prepened with a # e.g. #amp wth e.g. s('amp)
+        // replace any instances of e, e1, e2, etc. prepended with a #, to e.g. adsr(e), adsr(e1) etc.
+        code = code.replace(/#(e\d*)/g, (_, name) => {
+          return `adsr('${name}')`;
+        });
+        // replace any remaining string prepended with a # e.g. #amp wth e.g. s('amp)
         code = code.replace(/#([a-zA-Z_][a-zA-Z0-9_]*)/g, (match, p1) => {
-            // If the argument is a string or a variable name, wrap it in quotes
             return `s('${p1}')`;
         });
+
+        console.log(code)
         return code;
     }
 

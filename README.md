@@ -28,6 +28,11 @@ console.log(ZM.inputs)
 ZM.set(`sine(#f).pan(#pan).out()`) // is equivalent to
 ZM.set(`sine(sig(f)).pan(sig(pan)).out()`) // this
 
+// whilst #e, #e1, #e2 ... are always handled as envelopes
+ZM.set(`sine(100).amp(adsr(e)).pan().out()`) // is equivalent to
+ZM.set(`sine(100).amp(#e).pan().out()`) // this
+
+
 // interact with patch whilst it is running
 ZM.inputs.e() // trigger envelope
 ZM.inputs.f(1000, 1000) // ramp frequency to 1000Hz over 1s
