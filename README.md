@@ -1,8 +1,4 @@
-## TODO
-* main output should be in the zmod class, not shared...
-Zen integration
-With Zen
-* Use existing context and/or transport
+# ZMod
 
 ## Basic Usage
 ```js

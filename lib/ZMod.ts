@@ -221,6 +221,31 @@ e current audio patch created from the transpiled cod/tonee.
     }
 
     /**
+     * Mutate: triggers any input functions with matching names passing a lag time.
+     */
+    mutate(args: Record<string, any> = {}, time: number, lag: number): ZMod {
+        Object.keys(this.inputs).forEach((key: string) => 
+            args[key] !== undefined
+                && this.inputs[key](args[key], time, lag)
+        );
+
+        return this;
+    }
+
+    /**
+     * Cut any envelopes are currently playing.
+     */
+    cut(time: number, release: number = 10): ZMod {
+        // Call each envelope input if it exists
+        Object.keys(this.inputs)
+            .filter((key) => /^e\d*$/.test(key))
+            .forEach((key) => {
+                this.inputs[key]({}).triggerRelease(time, release / 1000);
+            });
+        return this;
+    }
+
+    /**
      * Disconnects ZMod's output bus.
      */
     disconnect(): ZMod {
@@ -235,7 +260,6 @@ e current audio patch created from the transpiled cod/tonee.
      * @returns The ZMod instance for method chaining.
      */
     connect(node: AudioNode, channels?: number | number[]): ZMod {
-        console.log(channels)
         if(channels !== undefined) {
             const chs = [channels].flat();
             const splitter = new Split(32); // 32-channel splitter

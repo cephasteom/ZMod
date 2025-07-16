@@ -39,7 +39,25 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     signals: {
         sig: (value: number): Signal => new Signal(value),
         s: (value: number): Signal => new Signal(value),
-        ...Object.fromEntries([Abs, Add, Multiply, Subtract, GreaterThan, GreaterThanZero, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp].map((Class) => {
+        add: (signal: Signal, value: ControlSignal): Signal => {
+            const node = new Add(toNumber(value));
+            assignOrConnect(node.addend, value);
+            signal.connect(node);
+            return node;
+        },
+        mul: (signal: Signal, value: ControlSignal): Signal => {
+            const node = new Multiply(toNumber(value));
+            assignOrConnect(node.factor, toControlSignal(value));
+            signal.connect(node);
+            return node;
+        },
+        sub: (signal: Signal, value: ControlSignal): Signal => {
+            const node = new Subtract(toNumber(value));
+            assignOrConnect(node.subtrahend, toControlSignal(value));
+            signal.connect(node);
+            return node;
+        },
+        ...Object.fromEntries([Abs, GreaterThan, GreaterThanZero, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp].map((Class) => {
             // to lowercase and remove any _
             const name = Class.name.toLowerCase().replace(/_/g, '');
             return [name, (signal: Signal, ...args: number[]): Signal => {
@@ -294,8 +312,10 @@ export const libraryKeys = Object.entries(nodes)
 
 // Input functions
 const inputFns: Record<string, (node: any) => (...args: any[]) => AudioSignal> = {
-    _signal: (node: any) => (value: number, time: number) => {
-        node.setValueAtTime(value, time);
+    _signal: (node: any) => (value: number, time: number, lag?: number) => {
+        lag 
+            ? node.rampTo(value, lag / 1000, time)
+            : node.setValueAtTime(value, time);
         return node
     },
     _envelope: (node: Envelope) => (options: { a?: number, d?: number, s?: number, r?: number }) => {
