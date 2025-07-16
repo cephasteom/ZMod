@@ -319,7 +319,7 @@ const inputFns: Record<string, (node: any) => (...args: any[]) => AudioSignal> =
         return node
     },
     _envelope: (node: Envelope) => (options: { a?: number, d?: number, s?: number, r?: number }) => {
-        const { a = 100, d = 100, s = 0.8, r = 800 } = options;
+        const { a = 10, d = 10, s = 0.5, r = 800 } = options;
         node.set({attack: a / 1000, decay: d / 1000, sustain: s, release: r / 1000});
         return node
     }
