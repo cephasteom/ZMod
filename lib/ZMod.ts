@@ -1,5 +1,5 @@
-import { Merge, getTransport, getContext, BaseContext } from "tone";
-import { library, libraryKeys, makePatch, type Patch, outputs } from "./engines/tone";
+import { Merge, getTransport, getContext, BaseContext, Split } from "tone";
+import { library, libraryKeys, makePatch, type Patch, outputs, destination } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 
@@ -106,11 +106,10 @@ e current audio patch created from the transpiled cod/tonee.
           return `adsr('${name}')`;
         });
         // replace any remaining string prepended with a # e.g. #amp wth e.g. s('amp)
-        code = code.replace(/#([a-zA-Z_][a-zA-Z0-9_]*)/g, (match, p1) => {
-            return `s('${p1}')`;
+        code = code.replace(/#([a-zA-Z_][a-zA-Z0-9_]*)/g, (_, name) => {
+            return `s('${name}')`;
         });
 
-        console.log(code)
         return code;
     }
 
@@ -235,8 +234,26 @@ e current audio patch created from the transpiled cod/tonee.
      * @param args The AudioNode to connect to, and optional output and input indices.
      * @returns The ZMod instance for method chaining.
      */
-    connect(...args: [AudioNode, number?, number?]): ZMod {
-        this._outputs.connect(...args);
+    connect(node: AudioNode, channels?: number | number[]): ZMod {
+        console.log(channels)
+        if(channels !== undefined) {
+            const chs = [channels].flat();
+            const splitter = new Split(32); // 32-channel splitter
+            const merger = new Merge(chs.length); // 32-channel merger
+            this._outputs.connect(splitter);
+            [channels].flat().forEach((channel: number, i: number) => {
+                splitter.connect(merger, channel, i);
+            })
+            merger.connect(node);
+        } else {
+            this._outputs.connect(node);
+        }
+
+        return this;
+    }
+
+    toDestination(): ZMod {
+        this._outputs.connect(destination);
         return this;
     }
 }

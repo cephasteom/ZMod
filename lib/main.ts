@@ -9,7 +9,7 @@ if (localStorage.getItem("zmod-code")) {
     codeInput.value = localStorage.getItem("zmod-code") || "";
 }
 
-const zm = new ZMod()
+const zm = new ZMod().toDestination();
 
 nodesDisplay.innerHTML = Object.entries(zm.libraryKeys)
     .filter(([category, _]) => category !== "core")

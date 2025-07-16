@@ -25,7 +25,7 @@ import {
 } from './factories';
 
 export type { Patch } from "./tone.d.ts";
-export { outputs } from './audio';
+export { outputs, destination } from './audio';
 
 let onDisposeFns: (() => void)[] = [];
 
