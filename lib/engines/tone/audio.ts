@@ -1,4 +1,5 @@
 import { 
+    Gain,
     Merge, 
     getDestination,
 } from 'tone'
@@ -11,4 +12,4 @@ destination.channelCount = destination.maxChannelCount
 export const outputs = new Merge({channels: 32})
 
 // Create a bank of busses for internal routing
-export const busses = (new Merge({channels: 32}))
+export const busses = Array.from({ length: 32 }, (_, i) => new Gain(1))

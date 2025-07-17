@@ -250,8 +250,8 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             
                 const merge = new Merge({channels: channels.length});
                 const delay = new Delay(0.01); // 10 ms delay - otherwise we get a feedback loop and the audio will not play
-                
-                channels.forEach((ch, i) => outputs.connect(merge, ch, i));
+
+                channels.forEach((ch, i) => busses[ch].connect(merge, 0, i));
 
                 merge.connect(delay);
                 return delay;
@@ -270,7 +270,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
                 node.connect(split);
                 
                 // connect each mono channel to the output bus
-                channels.forEach((ch, i) => split.connect(busses, i, ch));
+                channels.forEach((ch, i) => split.connect(busses[ch], i, 0));
     
                 // return the gain node so that we can control the volume
                 return node

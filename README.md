@@ -1,5 +1,18 @@
 # ZMod
+TODO:
 
+* polyphony - separate function after loadNodes?
+* bus() being parsed incorrectly. Also, much quieter. E.g.
+```ts
+let patch = `fm(200).amp(#e).pan().bus(0,1)`
+
+s0.set({inst: 'zmod', patch, dur: 100})
+s0.e.every(8)
+
+patch = `stack(bus(0,1))`
+s1.set({inst: 'zmod', patch, dur: 100, out: 2})
+s1.e.every(12)
+```
 ## Basic Usage
 ```js
 const ZM = new ZMod() 
