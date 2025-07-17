@@ -2,6 +2,7 @@ import { Merge, getTransport, getContext, BaseContext, Split } from "tone";
 import { library, libraryKeys, makePatch, type Patch, outputs, destination } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
+import { busses } from "./engines/tone/audio";
 
 /**
  * ZMod class that represents a modular audio synthesis environment.
@@ -155,6 +156,7 @@ e current audio patch created from the transpiled cod/tonee.
         // Don't create a new patch if the code hasn't changed
         try {
             if(this._isNewPatch) {
+                busses.forEach(bus => bus.disconnect()); // Disconnect all busses
                 this._patch?.dispose();
                 this._patch = makePatch(this._transpiledCode);
             }

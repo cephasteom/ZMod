@@ -242,40 +242,19 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             return output
         },
 
-        bus: (node: AudioSignal, ...channels: number[]): AudioSignal => {
-            // If the node is a number, we assume it's actually a channel number
-            // and we use bus() as an audio input
-            if (typeof node === 'number') {
-                channels.unshift(node); // Add the channel number to the front of the channels array
-            
-                const merge = new Merge({channels: channels.length});
-                const delay = new Delay(0.01); // 10 ms delay - otherwise we get a feedback loop and the audio will not play
-
-                channels.forEach((ch, i) => busses[ch].connect(merge, 0, i));
-
-                merge.connect(delay);
+        bus: (nodeOrBus: AudioSignal | number, bus?: number): AudioSignal => {
+            // route from bus
+            if (typeof nodeOrBus === 'number') {
+                const i = nodeOrBus;
+                const delay = new Delay(0.01); // prevent feedback loop
+                busses[i].connect(delay);
                 return delay;
-                
-            // else if the node is an AudioSignal
-            // we connect it to the bus as an audio output
+            // route to bus
             } else {
-    
-                // If no channels are specified, use the first two channels
-                channels = channels.length > 0
-                    ? channels
-                    : [0,1]
-                
-                // split the output into mono channels
-                const split = new Split(channels.length);
-                node.connect(split);
-                
-                // connect each mono channel to the output bus
-                channels.forEach((ch, i) => split.connect(busses[ch], i, 0));
-    
-                // return the gain node so that we can control the volume
+                const node = nodeOrBus as AudioSignal;
+                node.connect(busses[bus || 0]);
                 return node
             }
-
         },
 
         stack: (...nodes: AudioSignal[]): AudioSignal => {
