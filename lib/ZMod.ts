@@ -208,10 +208,11 @@ e current audio patch created from the transpiled cod/tonee.
             .reduce((acc: Record<string, Record<string, number>>, [key, value]: [string, number]) => {
                 // @ts-ignore
                 const [, param, index = ''] = key.match(/^([adsr])(\d*)$/); // '' means no index → 'e'
+                const env = `e${index}`
                 return {
                     ...acc,
-                    [`e${index}`]: {
-                        ...(acc[index] || {}),
+                    [env]: {
+                        ...(acc[env] || {}),
                         [param]: value
                     }
                 };
