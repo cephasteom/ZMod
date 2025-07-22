@@ -1,3 +1,4 @@
 import ZMod from "./ZMod";
 
-export default ZMod;
+export default ZMod
+
