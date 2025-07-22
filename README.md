@@ -1,8 +1,4 @@
 # ZMod
-TODO:
-
-* polyphony - separate function after loadNodes?
-* bus() being parsed incorrectly. Also, much quieter. E.g.
 ```ts
 let patch = `fm(200).amp(#e).pan().bus(0,1)`
 
