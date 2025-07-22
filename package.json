@@ -1,6 +1,6 @@
 {
   "name": "zmod",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "A DSP library for generating audiographs from higher level audio components. Built with RNBO, and for zen.cephasteom.co.uk. But hopefully useful elsewhere.",
   "author": "CephasTeom",
   "license": "MIT",
