@@ -1,4 +1,4 @@
-import { Merge, getTransport, getContext, BaseContext, Split } from "tone";
+import { Merge, getTransport, getContext, BaseContext, Split, Gain } from "tone";
 import { library, libraryKeys, makePatch, type Patch, outputs, destination } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
@@ -31,6 +31,11 @@ export default class ZMod {
      * A 32 channel output bus that merges all audio outputs into a single stream.
      */
     _outputs: Merge = outputs;
+
+    /**
+     * A collection of Gain nodes that can be used as busses in the ZMod environment.
+     */
+    _busses: Gain<"gain">[] = busses;
     
     /**
      * A collection of Nodes that can be used in the ZMod environment.
@@ -62,11 +67,15 @@ e current audio patch created from the transpiled cod/tonee.
     libraryKeys: Record<string, string[]> = libraryKeys;
 
     constructor(
-        options?: {context?: BaseContext, transport?: TransportClass}
+        options?: {context?: BaseContext, transport?: TransportClass, busses?: Gain<"gain">[]}
     ) {
         // Initialize the context and transport if provided, otherwise use defaults
         this._context = options?.context || getContext();
         this._transport = options?.transport || getTransport();
+        
+        // optionally replace the default busses with those external to the patch
+        this._busses = options?.busses || busses;
+        
         // Load the library of Nodes 
         // loaded internally so that we might swap out tone.js for another library in future
         this.loadNodes(library)
@@ -156,9 +165,9 @@ e current audio patch created from the transpiled cod/tonee.
         // Don't create a new patch if the code hasn't changed
         try {
             if(this._isNewPatch) {
-                busses.forEach(bus => bus.disconnect()); // Disconnect all busses
+                this._busses.forEach(bus => bus.disconnect()); // Disconnect all busses
                 this._patch?.dispose();
-                this._patch = makePatch(this._transpiledCode);
+                this._patch = makePatch(this._transpiledCode, this._busses);
             }
             this._patch?.output?.gain?.rampTo(0.25, 0.1); // Fade in volume, 0.25 is loud enough
             this._transport?.start();

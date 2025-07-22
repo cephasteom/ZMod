@@ -5,13 +5,13 @@ import {
     Noise,
     Gain, Envelope, Panner, Follower,
     Reverb, FeedbackDelay, Distortion, Chorus,
-    Split, Merge,
+    Split,
     FeedbackCombFilter,
     Delay,
     type FilterRollOff,
 } from 'tone'
 
-import { busses, outputs } from './audio';
+import { busses as bs, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
 import { assignOrConnect, toControlSignal, toNumber } from './helpers';
 import { 
@@ -28,6 +28,7 @@ export type { Patch } from "./tone.d.ts";
 export { outputs, destination } from './audio';
 
 let onDisposeFns: (() => void)[] = [];
+let busses: Gain<"gain">[] = bs;
 
 // Library
 const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
@@ -313,8 +314,12 @@ function formatInputs(inputs: Record<string, Signal | Param | Envelope>): Record
 }
 
 // Patch creation
-export const makePatch = (code: string): Patch => {
+export const makePatch = (
+    code: string, 
+    bs?: Gain<"gain">[]
+): Patch => {
     onDisposeFns = []; // Reset dispose functions
+    busses = bs || busses; // Use provided busses or default
     
     const result = new Function(
         ...Object.keys(library), 
