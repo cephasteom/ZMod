@@ -206,6 +206,7 @@ e current audio patch created from the transpiled cod/tonee.
      * Play: triggers any input functions with matching names.
      */
     play(args: Record<string, any> = {}, time: number): ZMod {
+        console.log("Playing with args:", args );
         Object.keys(this.inputs).forEach((key: string) => 
             args[key] && this.inputs[key](args[key], time)
         )
@@ -227,6 +228,8 @@ e current audio patch created from the transpiled cod/tonee.
                     }
                 };
             }, {"e" : {}});
+
+        console.log("Envelopes:", envelopes);
 
         // call any function that starts with e, e1, e2, etc. in the inputs
         Object.keys(this.inputs)
