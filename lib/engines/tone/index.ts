@@ -292,13 +292,13 @@ export const libraryKeys = Object.entries(nodes)
 
 // Input functions
 const inputFns: Record<string, (node: any) => (...args: any[]) => AudioSignal> = {
-    _signal: (node: any) => (value: number, time: number, lag?: number) => {
+    signal: (node: any) => (value: number, time: number, lag?: number) => {
         lag 
             ? node.rampTo(value, lag / 1000, time)
             : node.setValueAtTime(value, time);
         return node
     },
-    _envelope: (node: Envelope) => (options: { a?: number, d?: number, s?: number, r?: number }) => {
+    envelope: (node: Envelope) => (options: { a?: number, d?: number, s?: number, r?: number }) => {
         const { a = 10, d = 10, s = 0.5, r = 800 } = options;
         node.set({attack: a / 1000, decay: d / 1000, sustain: s, release: r / 1000});
         return node
@@ -307,7 +307,8 @@ const inputFns: Record<string, (node: any) => (...args: any[]) => AudioSignal> =
 
 function formatInputs(inputs: Record<string, Signal | Param | Envelope>): Record<string, (...args: any[]) => void> {
     return Object.entries(inputs).reduce((acc, [key, value]) => {
-        const fn = inputFns[value.constructor.name.toLowerCase()];
+        const name = value.constructor.name.toLowerCase().replace(/_/g, '').toLowerCase()
+        const fn = inputFns[name];
         acc[key] = fn ? fn(value) : () => {}
         return acc;
     }, {} as Record<string, (...args: any[]) => void>);
@@ -327,8 +328,6 @@ export const makePatch = (
     )(...Object.values(library))
     
     const { inputs, output } = result;
-
-    console.log(inputs)
 
     return {
         inputs: formatInputs(inputs || {}),
