@@ -124,6 +124,7 @@ e current audio patch created from the transpiled cod/tonee.
             return `s('${name}')`;
         });
 
+        console.log("Parsed code:", code);
         return code;
     }
 
