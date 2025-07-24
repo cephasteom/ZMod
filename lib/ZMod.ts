@@ -206,6 +206,7 @@ e current audio patch created from the transpiled cod/tonee.
      * Play: triggers any input functions with matching names.
      */
     play(args: Record<string, any> = {}, time: number): ZMod {
+        console.log(this.inputs, args)
         Object.keys(this.inputs).forEach((key: string) => 
             args[key] && this.inputs[key](args[key], time)
         )
