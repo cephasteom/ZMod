@@ -328,6 +328,8 @@ export const makePatch = (
     
     const { inputs, output } = result;
 
+    console.log(inputs)
+
     return {
         inputs: formatInputs(inputs || {}),
         output,
