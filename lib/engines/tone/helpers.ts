@@ -1,5 +1,5 @@
 import { ControlSignal } from './tone';
-import { Signal, Param, LFO, FilterRollOff, Envelope, Follower, Gain, Scale } from 'tone';
+import { Signal, Param, LFO, FilterRollOff, Envelope, Follower, Gain, Scale, getTransport, Time } from 'tone';
 
 // Helpers
 export function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSignal): void {
@@ -26,4 +26,30 @@ export function toRolloff(value: ControlSignal): FilterRollOff {
     return [-12, -24, -48, -96].includes(rolloff)
         ? rolloff as FilterRollOff
         : -12; // Default to -12 if not a valid rolloff
+}
+
+export function nearestTimeStringFromHz(freqHz: number, bpm: number = getTransport().bpm.value) {
+  if (freqHz <= 0) return null;
+
+  const timeValues = [
+    "1n", "2n", "4n", "8n", "16n", "32n", "64n",
+    "1m", "2m", "4m", "8m", "16m", "32m", "64m", "128m"
+  ];
+
+  // Convert each time value to its equivalent frequency
+  const freqFromTime = (timeStr: string) => 1 / Time(timeStr).toSeconds();
+
+  let closest = timeValues[0];
+  let smallestDiff = Infinity;
+
+  for (let t of timeValues) {
+    const f = freqFromTime(t);
+    const diff = Math.abs(f - freqHz);  
+    if (diff < smallestDiff) {
+      smallestDiff = diff;
+      closest = t;
+    }
+  }
+
+  return closest;
 }

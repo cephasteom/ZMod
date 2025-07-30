@@ -11,7 +11,7 @@ import {
 import { onDisposeFns } from './stores';
 
 import { ControlSignal, AudioSignal } from './tone';
-import { assignOrConnect, toNumber, toRolloff } from './helpers';
+import { assignOrConnect, nearestTimeStringFromHz, toNumber, toRolloff } from './helpers';
 
 export function makeOsc(type: ToneOscillatorType, freq: ControlSignal = 220): AudioSignal {
     const osc = new Oscillator(220, type).sync().start("0.05")
@@ -96,7 +96,10 @@ export function makeLfo(
     min: ControlSignal = 0, 
     max: ControlSignal = 1,
 ): ControlSignal {
-    const lfo = new LFO({min: toNumber(min), max: toNumber(max), type}).sync().start("0.05")
+    const lfo = new LFO({min: toNumber(min), max: toNumber(max), type}).sync()
+    toNumber(frequency) < 1  
+        ? lfo.unsync().start("0.05")
+        : lfo.sync().start("0.05")
     assignOrConnect(lfo.frequency, frequency)
     onDisposeFns.update((fns) => [...fns, () => lfo.dispose()]);
     return lfo
