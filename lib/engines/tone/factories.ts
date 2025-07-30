@@ -11,7 +11,7 @@ import {
 import { onDisposeFns } from './stores';
 
 import { ControlSignal, AudioSignal } from './tone';
-import { assignOrConnect, nearestTimeStringFromHz, toNumber, toRolloff } from './helpers';
+import { assignOrConnect, toNumber, toRolloff } from './helpers';
 
 export function makeOsc(type: ToneOscillatorType, freq: ControlSignal = 220): AudioSignal {
     const osc = new Oscillator(220, type).sync().start("0.05")
