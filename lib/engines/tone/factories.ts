@@ -108,12 +108,15 @@ export function makeNoise(
 ): AudioSignal {
     const transport = getTransport();
     const noise = new Noise({type, playbackRate: toNumber(rate)}).start("0.05");
+    
     const stopNoise = () => noise.volume.rampTo(-Infinity, 0.1);
     const startNoise = () => noise.volume.rampTo(0, 0.1);
     transport.on('stop', stopNoise);
     transport.on('start', startNoise);
+    
     // @ts-ignore
     assignOrConnect(noise._source.playbackRate, rate);
+    
     onDisposeFns.update((fns) => [
         ...fns, 
         () => noise.dispose(),
