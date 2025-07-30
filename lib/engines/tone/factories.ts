@@ -3,17 +3,19 @@ import {
     FMOscillator, AMOscillator, PWMOscillator, FatOscillator, 
     Filter,
     type ToneOscillatorType,
-    Noise,
-    Follower,
-    Signal
+    Noise
 } from 'tone'
+
+import { onDisposeFns } from './stores';
 
 import { ControlSignal, AudioSignal } from './tone';
 import { assignOrConnect, toNumber, toRolloff } from './helpers';
 
 export function makeOsc(type: ToneOscillatorType, freq: ControlSignal = 220): AudioSignal {
-    const osc = new Oscillator(220, type).sync().start("0.05")
+    const osc = new Oscillator(220, type).start("0.05")
     assignOrConnect(osc.frequency, freq)
+    osc.volume.setValueAtTime(-12, 0); // Set initial volume to -12dB
+    onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
     return osc
 }
 
@@ -23,11 +25,13 @@ export function makeFm(
     carrier: ToneOscillatorType = 'sine', 
     modulator: ToneOscillatorType = 'sine'
 ): AudioSignal {
-    const fmOsc = new FMOscillator(220, carrier, modulator).sync().start("0.05");
-    assignOrConnect(fmOsc.frequency, frequency);
-    assignOrConnect(fmOsc.harmonicity, harmonicity);
-    assignOrConnect(fmOsc.modulationIndex, modulationIndex);
-    return fmOsc;
+    const osc = new FMOscillator(220, carrier, modulator).start("0.05");
+    assignOrConnect(osc.frequency, frequency);
+    assignOrConnect(osc.harmonicity, harmonicity);
+    assignOrConnect(osc.modulationIndex, modulationIndex);
+    osc.volume.setValueAtTime(-12, 0); // Set initial volume to -12dB
+    onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
+    return osc;
 }
 
 export function makeAm(
@@ -36,20 +40,24 @@ export function makeAm(
     carrier: ToneOscillatorType = 'sine',
     modulator: ToneOscillatorType = 'sine'
 ): AudioSignal {
-    const amOsc = new AMOscillator(220, carrier, modulator).sync().start("0.05");
-    assignOrConnect(amOsc.frequency, frequency);
-    assignOrConnect(amOsc.harmonicity, harmonicity);
-    return amOsc;
+    const osc = new AMOscillator(220, carrier, modulator).start("0.05");
+    assignOrConnect(osc.frequency, frequency);
+    assignOrConnect(osc.harmonicity, harmonicity);
+    osc.volume.setValueAtTime(-12, 0); // Set initial volume to -12dB
+    onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
+    return osc;
 }
 
 export function makePwm(
     frequency: ControlSignal = 220, 
     modulationFrequency: ControlSignal = 0.5,
 ): AudioSignal {
-    const pwmOsc = new PWMOscillator(220).sync().start("0.05");
-    assignOrConnect(pwmOsc.frequency, frequency);
-    assignOrConnect(pwmOsc.modulationFrequency, modulationFrequency);
-    return pwmOsc;
+    const osc = new PWMOscillator(220).start("0.05");
+    assignOrConnect(osc.frequency, frequency);
+    assignOrConnect(osc.modulationFrequency, modulationFrequency);
+    osc.volume.setValueAtTime(-12, 0); // Set initial volume to -12dB
+    onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
+    return osc;
 }
 
 export function makeFat(
@@ -57,9 +65,10 @@ export function makeFat(
     spread: ControlSignal = 10, // spread in cents
     type: ToneOscillatorType = 'sine'
 ): AudioSignal {
-    const osc = new FatOscillator(220, type, toNumber(spread)).sync().start("0.05");
-    console.log(osc)
+    const osc = new FatOscillator(220, type, toNumber(spread)).start("0.05");
     assignOrConnect(osc.frequency, frequency);
+    osc.volume.setValueAtTime(-12, 0); // Set initial volume to -12dB
+    onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
     return osc;
 }
 
@@ -75,6 +84,7 @@ export function makeFilter(
     assignOrConnect(filter.frequency, frequency);
     assignOrConnect(filter.Q, q);
     node.connect(filter);
+    onDisposeFns.update((fns) => [...fns, () => filter.dispose()]);
     return filter;
 }
 
@@ -88,5 +98,15 @@ export function makeLfo(
     const lfo = new LFO({min: toNumber(min), max: toNumber(max), type}).start("0.05")
     assignOrConnect(lfo.frequency, frequency)
     synced && lfo.sync()
+    onDisposeFns.update((fns) => [...fns, () => lfo.dispose()]);
     return lfo
+}
+
+export function makeNoise(
+    type: 'white' | 'pink' | 'brown' = 'white', 
+    playbackRate: number = 1,
+): AudioSignal {
+    const noise = new Noise({type, playbackRate}).start(0);
+    onDisposeFns.update((fns) => [...fns, () => noise.dispose()]);
+    return noise;
 }

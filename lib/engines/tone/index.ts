@@ -21,13 +21,15 @@ import {
     makePwm, 
     makeFat, 
     makeLfo, 
-    makeFilter
+    makeFilter,
+    makeNoise
 } from './factories';
+import { onDisposeFns } from './stores';
+import { on } from 'events';
 
 export type { Patch } from "./tone.d.ts";
 export { outputs, destination } from './audio';
 
-let onDisposeFns: (() => void)[] = [];
 let busses: Gain<"gain">[] = bs;
 
 // Library
@@ -44,18 +46,21 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             const node = new Add(toNumber(value));
             assignOrConnect(node.addend, value);
             signal.connect(node);
+            onDisposeFns.update((fns) => [...fns, () => node.dispose()]);
             return node;
         },
         mul: (signal: Signal, value: ControlSignal): Signal => {
             const node = new Multiply(toNumber(value));
             assignOrConnect(node.factor, toControlSignal(value));
             signal.connect(node);
+            onDisposeFns.update((fns) => [...fns, () => node.dispose()]);
             return node;
         },
         sub: (signal: Signal, value: ControlSignal): Signal => {
             const node = new Subtract(toNumber(value));
             assignOrConnect(node.subtrahend, toControlSignal(value));
             signal.connect(node);
+            onDisposeFns.update((fns) => [...fns, () => node.dispose()]);
             return node;
         },
         ...Object.fromEntries([Abs, GreaterThan, GreaterThanZero, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp].map((Class) => {
@@ -66,6 +71,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
                 // @ts-ignore
                 const node = new Class(...args);
                 signal.connect(node);
+                onDisposeFns.update((fns) => [...fns, () => node.dispose()]);
                 return node;
             }]
         })),
@@ -106,9 +112,9 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     },
 
     noise: {
-        white: (rate: 1): AudioSignal => new Noise({type: 'white', playbackRate: rate}).start(0),
-        pink: (rate: 1): AudioSignal => new Noise({type: 'pink', playbackRate: rate}).start(0),
-        brown: (rate: 1): AudioSignal => new Noise({type: 'brown', playbackRate: rate}).start(0),
+        white: (rate: 1): AudioSignal => makeNoise('white', rate),
+        pink: (rate: 1): AudioSignal => makeNoise('pink', rate),
+        brown: (rate: 1): AudioSignal => makeNoise('brown', rate),
     },
     
     // ControlSignals
@@ -125,7 +131,9 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             attack /= 1000;
             decay /= 1000;
             release /= 1000;
-            return new Envelope({attack, decay, sustain, release});
+            const envelope = new Envelope({attack, decay, sustain, release});
+            onDisposeFns.update((fns) => [...fns, () => envelope.dispose()]);
+            return envelope;
         },
     },
 
@@ -134,6 +142,8 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             const gainNode = new Gain(1);
             assignOrConnect(gainNode.gain, value);
             node.connect(gainNode);
+
+            onDisposeFns.update((fns) => [...fns, () => gainNode.dispose()]);
             return gainNode;
         },
     },
@@ -144,6 +154,11 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             const signal = new Signal();
             node.connect(follower);
             follower.connect(signal);
+
+            onDisposeFns.update((fns) => [...fns, () => {
+                signal.dispose();
+                follower.dispose();
+            }]);
             return signal;
         }
     },
@@ -166,7 +181,10 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             assignOrConnect(filter.delayTime, delayTime);
             assignOrConnect(filter.resonance, resonance);
             node.connect(filter);
-            return filter;  
+
+            onDisposeFns.update((fns) => [...fns, () => filter.dispose()]);
+
+            return filter;
         }
     },
 
@@ -175,6 +193,9 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             const reverb = new Reverb(toNumber(decay)/1000);
             assignOrConnect(reverb.wet, wet);
             node.connect(reverb);
+
+            onDisposeFns.update((fns) => [...fns, () => reverb.dispose()]);
+
             return reverb;
         },
         delay: (node: AudioSignal, wet: ControlSignal = 0.5, delayTime: ControlSignal = 0.5, feedback: ControlSignal = 0.5): AudioSignal => {
@@ -187,12 +208,18 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             assignOrConnect(delay.delayTime, delayTime);
             assignOrConnect(delay.feedback, feedback);
             node.connect(delay);
+
+            onDisposeFns.update((fns) => [...fns, () => delay.dispose()]);
+
             return delay;
         },
         dist: (node: AudioSignal, wet: ControlSignal = 0.5, distortion: ControlSignal = 0.5): AudioSignal => {
             const dist = new Distortion(toNumber(distortion));
             assignOrConnect(dist.wet, wet);
             node.connect(dist);
+
+            onDisposeFns.update((fns) => [...fns, () => dist.dispose()]);
+
             return dist;
         },
         chorus: (node: AudioSignal, wet: ControlSignal = 0.5, frequency: ControlSignal = 1, feedback: ControlSignal = 0.005, depth: ControlSignal = 0.7): AudioSignal => {
@@ -206,6 +233,9 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             assignOrConnect(chorus.frequency, frequency);
             assignOrConnect(chorus.feedback, feedback);
             node.connect(chorus);
+
+            onDisposeFns.update((fns) => [...fns, () => chorus.dispose()]);
+
             return chorus;
         }
     },
@@ -222,6 +252,13 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             assignOrConnect(panner.pan, scale);
             node.connect(panner);
             panner.connect(out);
+
+            onDisposeFns.update((fns) => [...fns, () => {
+                panner.dispose();
+                scale.dispose();
+                out.dispose();
+            }]);
+
             return out;
         },
 
@@ -240,6 +277,11 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
                 .then(() => console.log('input is open'))
                 .catch(err => console.error('input access denied:', err));
 
+            onDisposeFns.update((fns) => [...fns, () => {
+                output.dispose();
+                inputs.close();
+            }]);
+
             // Return the Gain node so that we can control the volume
             return output;
         },
@@ -256,9 +298,14 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             // split the output into mono channels
             const split = new Split(channels.length);
             output.connect(split);
-            
+
             // connect each mono channel to the output bus
             channels.forEach((ch, i) => split.connect(outputs, i, ch));
+            
+            onDisposeFns.update((fns) => [...fns, () => {
+                output.dispose();
+                split.dispose();
+            }]);
 
             // return the gain node so that we can control the volume
             return output
@@ -270,6 +317,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
                 const i = nodeOrBus;
                 const delay = new Delay(0.01); // prevent feedback loop
                 busses[i].connect(delay);
+                onDisposeFns.update((fns) => [...fns, () => delay.dispose()]);
                 return delay;
             // route to bus
             } else {
@@ -286,11 +334,13 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             const output = new Gain(1);
             nodes.forEach(node => {
                 node.gain?.rampTo(1, 0.1); // Ensure volume is turned up
-                node.connect(output)
-                onDisposeFns.push(() => {
-                    node.gain?.rampTo(0, 0.1); // Fade out volume
-                    setTimeout(() => node.dispose(), 1000);
-                });
+                node.connect(output);
+                onDisposeFns.update((fns) => [
+                    ...fns, () => {
+                        node.gain?.rampTo(0, 0.1); // Fade out volume
+                        setTimeout(() => node.dispose(), 1000);
+                    }
+                ]);
             })
             return output;
         }
@@ -340,7 +390,7 @@ export const makePatch = (
     code: string, 
     bs?: Gain<"gain">[]
 ): Patch => {
-    onDisposeFns = []; // Reset dispose functions
+    onDisposeFns.set([]); // Reset dispose functions
     busses = bs || busses; // Use provided busses or default
     
     const result = new Function(
@@ -354,9 +404,13 @@ export const makePatch = (
         inputs: formatInputs(inputs || {}),
         output,
         dispose: () => {
+            const disposeFns = [...onDisposeFns.get()];
             result.output?.gain?.rampTo(0, 0.5); // Fade out volume
-            onDisposeFns.forEach(fn => fn());
-            setTimeout(() => output?.dispose?.(), 1000); // Allow time for fade out
+            setTimeout(() => {
+                // @ts-ignore
+                disposeFns.forEach(fn => fn());
+                output?.dispose?.()
+            }, 1000); // Allow time for fade out
         }
     }
 }
