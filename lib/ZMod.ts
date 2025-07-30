@@ -107,17 +107,10 @@ e current audio patch created from the transpiled cod/tonee.
         // delete any ;
         code = code.replace(/;/g, '');
 
-        // wrap any non-numeric function arguments in quotes. These will either be between ( and ) or ( and ,. Ignore any arguments that are numbers or functions.
-        code = code.replace(/(\(|,)([a-zA-Z_][a-zA-Z0-9_]*)(?=\)|,)/g, (_, p1, p2) => {
-            // If the argument is a string or a variable name, wrap it in quotes
-            return `${p1}'${p2}'`;
-        });
-
         // replace any instances of e, e1, e2, etc. prepended with a #, to e.g. adsr(e), adsr(e1) etc.
         code = code.replace(/#(e\d*)/g, (_, name) => {
             return `adsr('${name}')`;
         });
-
 
         // replace any remaining string prepended with a # e.g. #amp wth e.g. s('amp')
         code = code.replace(/#([a-zA-Z_][a-zA-Z0-9_]*)/g, (_, name) => {
@@ -169,7 +162,7 @@ e current audio patch created from the transpiled cod/tonee.
                 this._patch?.dispose();
                 this._patch = makePatch(this._transpiledCode, this._busses);
             }
-            this._patch?.output?.gain?.rampTo(0.25, 0.1); // Fade in volume, 0.25 is loud enough
+            this._patch?.output?.gain?.rampTo(1, 0.1); // Fade in volume
             this._transport?.start();
         } catch (error) {
             console.error("Error compiling code:", error);
@@ -241,10 +234,11 @@ e current audio patch created from the transpiled cod/tonee.
      * Mutate: triggers any input functions with matching names passing a lag time.
      */
     mutate(args: Record<string, any> = {}, time: number, lag: number): ZMod {
-        Object.keys(this.inputs).forEach((key: string) => 
-            args[key] !== undefined
-                && this.inputs[key](args[key], time, lag)
-        );
+        Object.keys(this.inputs).forEach((key: string) => {
+            const rawKey = key.replace(/^_/, ''); // remove leading underscore
+            args[rawKey] !== undefined
+                && this.inputs[key](args[rawKey], time, lag)
+        });
 
         return this;
     }

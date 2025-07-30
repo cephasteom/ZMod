@@ -22,8 +22,8 @@ ZM.clear() // clear patch and dispose of all resources
 
 ## External Control
 ```js
-// pass a string (with or without quotes) as the first argument of a node...
-ZM.set(`sine(sig(f)).amp(env(e)).pan().out()`)
+// pass a string as the first argument of a node...
+ZM.set(`sine(sig('f')).amp(env('e')).pan().out()`)
 
 // ...to make the node controllable from outside the patch
 console.log(ZM.inputs)
@@ -31,10 +31,10 @@ console.log(ZM.inputs)
 
 // you can also do this shorthand to create signals for external control
 ZM.set(`sine(#f).pan(#pan).out()`) // is equivalent to
-ZM.set(`sine(sig(f)).pan(sig(pan)).out()`) // this
+ZM.set(`sine(sig('f')).pan(sig('pan')).out()`) // this
 
 // whilst #e, #e1, #e2 ... are always handled as envelopes
-ZM.set(`sine(100).amp(adsr(e)).pan().out()`) // is equivalent to
+ZM.set(`sine(100).amp(adsr('e')).pan().out()`) // is equivalent to
 ZM.set(`sine(100).amp(#e).pan().out()`) // this
 
 

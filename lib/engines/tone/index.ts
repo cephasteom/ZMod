@@ -106,18 +106,18 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     },
 
     noise: {
-        white: (): AudioSignal => new Noise('white').start(0),
-        pink: (): AudioSignal => new Noise('pink').start(0),
-        brown: (): AudioSignal => new Noise('brown').start(0),        
+        white: (rate: 1): AudioSignal => new Noise({type: 'white', playbackRate: rate}).start(0),
+        pink: (rate: 1): AudioSignal => new Noise({type: 'pink', playbackRate: rate}).start(0),
+        brown: (rate: 1): AudioSignal => new Noise({type: 'brown', playbackRate: rate}).start(0),
     },
     
     // ControlSignals
     lfos: {
-        lfo: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sine', frequency, min, max),
-        lfosine: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sine', frequency, min, max),
-        lfotri: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('triangle', frequency, min, max),
-        lfosquare: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('square', frequency, min, max),
-        lfosaw: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sawtooth', frequency, min, max),
+        lfo: (frequency: ControlSignal, min: number = 0, max: number = 1, synced = true) : ControlSignal => makeLfo('sine', frequency, min, max, synced),
+        lfosine: (frequency: ControlSignal, min: number = 0, max: number = 1, synced = true) : ControlSignal => makeLfo('sine', frequency, min, max, synced),
+        lfotri: (frequency: ControlSignal, min: number = 0, max: number = 1, synced = true) : ControlSignal => makeLfo('triangle', frequency, min, max, synced),
+        lfosquare: (frequency: ControlSignal, min: number = 0, max: number = 1, synced = true) : ControlSignal => makeLfo('square', frequency, min, max, synced),
+        lfosaw: (frequency: ControlSignal, min: number = 0, max: number = 1, synced = true) : ControlSignal => makeLfo('sawtooth', frequency, min, max, synced),
     },
 
     envelopes: {
@@ -212,6 +212,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
 
     routing: {
         pan: (node: AudioSignal, value: ControlSignal = 0.5): AudioSignal => {
+            const out = new Gain(1);
             // ensure value is a Signal
             const sig = toControlSignal(value);
             // scale the value to -1 to 1 so we can use 0 - 1 for panning
@@ -220,7 +221,8 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             const panner = new Panner(toNumber(scale));
             assignOrConnect(panner.pan, scale);
             node.connect(panner);
-            return panner;
+            panner.connect(out);
+            return out;
         },
 
         input: (...channels: number[]): AudioSignal => {
@@ -230,7 +232,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
                 : [0,1]
             
             // Create a Gain node to control the input volume
-            const output = new Gain(4);
+            const output = new Gain(2);
             
             inputs.connect(output);
 

@@ -2,7 +2,10 @@ import {
     Oscillator, LFO,
     FMOscillator, AMOscillator, PWMOscillator, FatOscillator, 
     Filter,
-    type ToneOscillatorType
+    type ToneOscillatorType,
+    Noise,
+    Follower,
+    Signal
 } from 'tone'
 
 import { ControlSignal, AudioSignal } from './tone';
@@ -55,6 +58,7 @@ export function makeFat(
     type: ToneOscillatorType = 'sine'
 ): AudioSignal {
     const osc = new FatOscillator(220, type, toNumber(spread)).sync().start("0.05");
+    console.log(osc)
     assignOrConnect(osc.frequency, frequency);
     return osc;
 }
@@ -75,12 +79,14 @@ export function makeFilter(
 }
 
 export function makeLfo(
-    type: ToneOscillatorType, 
+    type: ToneOscillatorType = 'sine', 
     frequency: ControlSignal = 0.5, 
     min: ControlSignal = 0, 
-    max: ControlSignal = 1
+    max: ControlSignal = 1,
+    synced: boolean = true
 ): ControlSignal {
-    const lfo = new LFO({min: toNumber(min), max: toNumber(max), type}).sync().start("0.05")
+    const lfo = new LFO({min: toNumber(min), max: toNumber(max), type}).start("0.05")
     assignOrConnect(lfo.frequency, frequency)
+    synced && lfo.sync()
     return lfo
 }
