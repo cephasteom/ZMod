@@ -25,7 +25,6 @@ import {
     makeNoise
 } from './factories';
 import { onDisposeFns } from './stores';
-import { on } from 'events';
 
 export type { Patch } from "./tone.d.ts";
 export { outputs, destination } from './audio';
@@ -119,11 +118,11 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     
     // ControlSignals
     lfos: {
-        lfo: (frequency: ControlSignal, min: number = 0, max: number = 1, synced = true) : ControlSignal => makeLfo('sine', frequency, min, max, synced),
-        lfosine: (frequency: ControlSignal, min: number = 0, max: number = 1, synced = true) : ControlSignal => makeLfo('sine', frequency, min, max, synced),
-        lfotri: (frequency: ControlSignal, min: number = 0, max: number = 1, synced = true) : ControlSignal => makeLfo('triangle', frequency, min, max, synced),
-        lfosquare: (frequency: ControlSignal, min: number = 0, max: number = 1, synced = true) : ControlSignal => makeLfo('square', frequency, min, max, synced),
-        lfosaw: (frequency: ControlSignal, min: number = 0, max: number = 1, synced = true) : ControlSignal => makeLfo('sawtooth', frequency, min, max, synced),
+        lfo: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sine', frequency, min, max),
+        lfosine: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sine', frequency, min, max),
+        lfotri: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('triangle', frequency, min, max),
+        lfosquare: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('square', frequency, min, max),
+        lfosaw: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sawtooth', frequency, min, max),
     },
 
     envelopes: {

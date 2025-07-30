@@ -176,6 +176,7 @@ e current audio patch created from the transpiled cod/tonee.
      * @returns ZMod
      */
     stop(): ZMod {
+        console.log('stop')
         this._transport?.stop();
         this._patch?.output?.gain?.rampTo(0, 0.1); // Fade out volume
         return this

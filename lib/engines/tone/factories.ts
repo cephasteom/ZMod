@@ -3,7 +3,9 @@ import {
     FMOscillator, AMOscillator, PWMOscillator, FatOscillator, 
     Filter,
     type ToneOscillatorType,
-    Noise
+    Noise,
+    getTransport,
+    immediate
 } from 'tone'
 
 import { onDisposeFns } from './stores';
@@ -93,20 +95,30 @@ export function makeLfo(
     frequency: ControlSignal = 0.5, 
     min: ControlSignal = 0, 
     max: ControlSignal = 1,
-    synced: boolean = true
 ): ControlSignal {
-    const lfo = new LFO({min: toNumber(min), max: toNumber(max), type}).start("0.05")
+    const lfo = new LFO({min: toNumber(min), max: toNumber(max), type}).sync().start("0.05")
     assignOrConnect(lfo.frequency, frequency)
-    synced && lfo.sync()
     onDisposeFns.update((fns) => [...fns, () => lfo.dispose()]);
     return lfo
 }
 
 export function makeNoise(
     type: 'white' | 'pink' | 'brown' = 'white', 
-    playbackRate: number = 1,
+    rate: ControlSignal = 1,
 ): AudioSignal {
-    const noise = new Noise({type, playbackRate}).start(0);
-    onDisposeFns.update((fns) => [...fns, () => noise.dispose()]);
+    const transport = getTransport();
+    const noise = new Noise({type, playbackRate: toNumber(rate)}).start("0.05");
+    const stopNoise = () => noise.volume.rampTo(-Infinity, 0.1);
+    const startNoise = () => noise.volume.rampTo(0, 0.1);
+    transport.on('stop', stopNoise);
+    transport.on('start', startNoise);
+    // @ts-ignore
+    assignOrConnect(noise._source.playbackRate, rate);
+    onDisposeFns.update((fns) => [
+        ...fns, 
+        () => noise.dispose(),
+        () => transport.off('stop', stopNoise),
+        () => transport.off('start', startNoise)
+    ]);
     return noise;
 }
