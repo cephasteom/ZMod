@@ -11,7 +11,7 @@ import {
     type FilterRollOff,
 } from 'tone'
 
-import { busses as bs, outputs } from './audio';
+import { busses as bs, inputs, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
 import { assignOrConnect, toControlSignal, toNumber } from './helpers';
 import { 
@@ -221,6 +221,25 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             assignOrConnect(panner.pan, scale);
             node.connect(panner);
             return panner;
+        },
+
+        input: (...channels: number[]): AudioSignal => {
+            // If no channels are specified, use the first two channels
+            channels = channels.length > 0
+                ? channels
+                : [0,1]
+            
+            // Create a Gain node to control the input volume
+            const output = new Gain(4);
+            
+            inputs.connect(output);
+
+            inputs.open()
+                .then(() => console.log('input is open'))
+                .catch(err => console.error('input access denied:', err));
+
+            // Return the Gain node so that we can control the volume
+            return output;
         },
     
         out: (node: AudioSignal | number, ...channels: number[]): AudioSignal => {
