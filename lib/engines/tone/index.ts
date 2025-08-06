@@ -125,7 +125,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
         lfosaw: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sawtooth', frequency, min, max),
     },
 
-    envelopes: {
+    triggers: {
         adsr: (attack: number = 100, decay: number = 100, sustain: number = 0.5, release: number = 800): Envelope => {
             attack /= 1000;
             decay /= 1000;
@@ -134,6 +134,10 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             onDisposeFns.update((fns) => [...fns, () => envelope.dispose()]);
             return envelope;
         },
+
+        // impulse
+
+        // dust
     },
 
     modifiers: {
@@ -332,7 +336,6 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             }
             const output = new Gain(1);
             nodes.forEach(node => {
-                node.gain?.rampTo(1, 0.1); // Ensure volume is turned up
                 node.connect(output);
                 onDisposeFns.update((fns) => [
                     ...fns, () => {
