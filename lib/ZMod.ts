@@ -4,6 +4,8 @@ import { Node, type NodeInput, registerNode } from "./Node";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 import { busses } from "./engines/tone/audio";
 
+const zmodChannel = new BroadcastChannel('zmod')
+
 /**
  * ZMod class that represents a modular audio synthesis environment.
  * It allows you to create and manipulate audio graphs using a custom scripting language.
@@ -137,7 +139,8 @@ e current audio patch created from the transpiled cod/tonee.
             this._isNewPatch = (transpiled !== this._transpiledCode);
             this._transpiledCode = transpiled;
         } catch (error) {
-            console.error("Error during transpilation:", error);
+            console.log(error)
+            zmodChannel.postMessage({ type: 'error', message: 'Zmod error: ' + error})
         }
 
         return this
@@ -165,7 +168,7 @@ e current audio patch created from the transpiled cod/tonee.
             this._patch?.output?.gain?.rampTo(1, 0.1); // Fade in volume
             this._transport?.start();
         } catch (error) {
-            console.error("Error compiling code:", error);
+            zmodChannel.postMessage({ type: 'error', message: 'Zmod compile error: ' + error})
         }
 
         return this
