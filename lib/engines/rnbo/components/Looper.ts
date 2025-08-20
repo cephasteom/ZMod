@@ -14,7 +14,7 @@ class Looper extends RNBODevice {
         this.params = Object.getOwnPropertyNames(this);
 
         this.initDevice()
-            .then(() =>this.record(1, 0) );
+            // .then(() => this.record(1, 0) );
     }
 
     /**

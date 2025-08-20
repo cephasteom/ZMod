@@ -202,7 +202,7 @@ e current audio patch created from the transpiled cod/tonee.
      */
     play(args: Record<string, any> = {}, time: number): ZMod {
         Object.keys(this.inputs).forEach((key: string) => 
-            args[key] && this.inputs[key](args[key], time)
+            args[key] !== undefined && this.inputs[key](args[key], time)
         )
 
         const { dur = 1000 } = args

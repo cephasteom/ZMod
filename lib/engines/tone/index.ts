@@ -13,7 +13,7 @@ import {
 
 import { busses as bs, inputs, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
-import { assignOrConnect, toControlSignal, toNumber } from './helpers';
+import { assignOrConnect, pollSignal, toControlSignal, toNumber } from './helpers';
 import { 
     makeOsc, 
     makeFm, 
@@ -248,6 +248,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
         loop: (node: AudioSignal, gain: ControlSignal = 0, beats: ControlSignal = 4): AudioSignal => {
             const output = new Gain(1);
             const looper = new Looper();
+            // looper.input.gain.value = 0; // set initial gain to 0
             node.connect(output);
             node.connect(looper.input);
             looper.connect(output);
@@ -257,7 +258,11 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             // wait for device to load
             setTimeout(() => {
                 looper.length(loopLength, 0); // set length of loop
-                assignOrConnect(looper.input.gain, gain);
+                // assignOrConnect(looper.input.gain, gain, 0.05); // record on / off - TODO: need a better way
+                pollSignal(gain, (value, time) => {
+                    // update the gain value based on the recorded input
+                    looper.record(value, time);
+                });
             }, 100);
 
             onDisposeFns.update((fns) => [...fns, () => {
