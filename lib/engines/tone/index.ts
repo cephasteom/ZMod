@@ -8,7 +8,6 @@ import {
     FeedbackCombFilter,
     Delay,
     type FilterRollOff,
-    Time,
     getTransport,
 } from 'tone'
 
@@ -246,19 +245,19 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     },
 
     recording: {
-        loop: (node: AudioSignal, gain: ControlSignal = 1, beats: ControlSignal = 4): AudioSignal => {
+        loop: (node: AudioSignal, gain: ControlSignal = 0, beats: ControlSignal = 4): AudioSignal => {
             const output = new Gain(1);
             const looper = new Looper();
             node.connect(output);
             node.connect(looper.input);
             looper.connect(output);
-            assignOrConnect(looper.input.gain, gain);
-
+            
             // convert beat to ms, e.g. 1 beat at 120 bpm = 500ms
             const loopLength = (60 / getTransport().bpm.value) * 1000 * beats;
             // wait for device to load
             setTimeout(() => {
                 looper.length(loopLength, 0); // set length of loop
+                assignOrConnect(looper.input.gain, gain);
             }, 100);
 
             onDisposeFns.update((fns) => [...fns, () => {
