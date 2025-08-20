@@ -248,26 +248,31 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
         loop: (node: AudioSignal, gain: ControlSignal = 0, beats: ControlSignal = 4): AudioSignal => {
             const output = new Gain(1);
             const looper = new Looper();
-            // looper.input.gain.value = 0; // set initial gain to 0
+            
             node.connect(output);
             node.connect(looper.input);
             looper.connect(output);
-            
-            // convert beat to ms, e.g. 1 beat at 120 bpm = 500ms
-            const loopLength = (60 / getTransport().bpm.value) * 1000 * beats;
+
+            let cancelPollSignal: () => void;
+
             // wait for device to load
             setTimeout(() => {
-                looper.length(loopLength, 0); // set length of loop
-                // assignOrConnect(looper.input.gain, gain, 0.05); // record on / off - TODO: need a better way
-                pollSignal(gain, (value, time) => {
-                    // update the gain value based on the recorded input
-                    looper.record(value, time);
-                });
-            }, 100);
+                looper.length((60 / getTransport().bpm.value) * 1000 * beats, 0);
+                cancelPollSignal = pollSignal(gain, (value, time) => looper.record(value, time));
+            }, 150);
+
+            getTransport().on('start', (time) => {
+                looper.start(time);
+                looper.output.gain.rampTo(1, 0.1);
+            });
+            getTransport().on('stop', () => looper.output.gain.rampTo(0, 0.1));
 
             onDisposeFns.update((fns) => [...fns, () => {
                 output.dispose();
                 looper.dispose();
+                cancelPollSignal();
+                // getTransport().off('start');
+                // getTransport().off('stop');
             }]);
 
             return output;

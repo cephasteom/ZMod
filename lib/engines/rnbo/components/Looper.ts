@@ -7,15 +7,20 @@ class Looper extends RNBODevice {
     constructor() {
         super();
         this.patcher = patcher;
-        
-        this.length = this.length.bind(this)
-        this.record = this.record.bind(this)
-        this.clear = this.clear.bind(this)
+
+        this.start = this.start.bind(this);
+        this.length = this.length.bind(this);
+        this.record = this.record.bind(this);
+        this.clear = this.clear.bind(this);
         this.params = Object.getOwnPropertyNames(this);
 
-        this.initDevice()
-            // .then(() => this.record(1, 0) );
+        this.initDevice();
     }
+
+    /** 
+     * Start - start the loop
+     */
+    start(time: number): void { this.messageDevice('start', 1, time) }
 
     /**
      * Length - set the length of the loop in ms
