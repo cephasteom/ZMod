@@ -2,13 +2,14 @@ import {
     Signal, Abs, Add, Subtract, GreaterThan, GreaterThanZero, Multiply, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp,
     Param, 
     PulseOscillator,
-    Noise,
     Gain, Envelope, Panner, Follower,
     Reverb, FeedbackDelay, Distortion, Chorus,
     Split,
     FeedbackCombFilter,
     Delay,
     type FilterRollOff,
+    Time,
+    getTransport,
 } from 'tone'
 
 import { busses as bs, inputs, outputs } from './audio';
@@ -25,6 +26,7 @@ import {
     makeNoise
 } from './factories';
 import { onDisposeFns } from './stores';
+import Looper from '../rnbo/components/Looper';
 
 export type { Patch } from "./tone.d.ts";
 export { outputs, destination } from './audio';
@@ -240,6 +242,31 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             onDisposeFns.update((fns) => [...fns, () => chorus.dispose()]);
 
             return chorus;
+        }
+    },
+
+    recording: {
+        loop: (node: AudioSignal, gain: ControlSignal = 1, beats: ControlSignal = 4): AudioSignal => {
+            const output = new Gain(1);
+            const looper = new Looper();
+            node.connect(output);
+            node.connect(looper.input);
+            looper.connect(output);
+            assignOrConnect(looper.input.gain, gain);
+
+            // convert beat to ms, e.g. 1 beat at 120 bpm = 500ms
+            const loopLength = (60 / getTransport().bpm.value) * 1000 * beats;
+            // wait for device to load
+            setTimeout(() => {
+                looper.length(loopLength, 0); // set length of loop
+            }, 100);
+
+            onDisposeFns.update((fns) => [...fns, () => {
+                output.dispose();
+                looper.dispose();
+            }]);
+
+            return output;
         }
     },
 
