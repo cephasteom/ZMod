@@ -6,7 +6,7 @@ export function assignOrConnect(target: Signal<any> | Param<any>, value: Control
     if (value === undefined) return;
     value instanceof LFO || value instanceof Signal || value instanceof Envelope || value instanceof Follower || value instanceof Gain || value instanceof Scale
         ? value.connect(target)
-        : (target as Signal | AudioParam).value = value;
+        : (target as Signal).rampTo(value, 0.05)
 }
 
 export function toNumber(value: ControlSignal): number {
