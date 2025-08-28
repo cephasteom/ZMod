@@ -13,7 +13,7 @@ import {
 
 import { busses as bs, inputs, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
-import { assignOrConnect, pollSignal, toControlSignal, toNumber, SmoothedSignal } from './helpers';
+import { assignOrConnect, pollSignal, toControlSignal, toNumber } from './helpers';
 import { 
     makeOsc, 
     makeFm, 
