@@ -61,17 +61,3 @@ export function nearestTimeStringFromHz(freqHz: number, bpm: number = getTranspo
 
     return closest;
 }
-
-/**
- * Wrapper around Signal class to ensure that it is always smoothed
- */
-export class SmoothedSignal extends Signal {
-    constructor(value: number) {
-        super(value);
-    }
-
-    public setValueAtTime(value: number, time: number) {
-        this.rampTo(value, 0.05, time);
-        return this;
-    }   
-}
