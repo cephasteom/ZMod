@@ -259,7 +259,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             setTimeout(() => {
                 looper.length((60 / getTransport().bpm.value) * 1000 * beats, 0);
                 cancelPollSignal = pollSignal(gain, (value, time) => looper.record(value, time));
-            }, 150);
+            }, 250);
 
             getTransport().on('start', (time) => {
                 looper.start(time);

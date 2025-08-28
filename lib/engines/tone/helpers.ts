@@ -2,11 +2,14 @@ import { ControlSignal } from './tone';
 import { Signal, Param, LFO, FilterRollOff, Envelope, Follower, Gain, Scale, getTransport, Time, Loop } from 'tone';
 
 // Helpers
-export function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSignal, smoothing: number = 0): void {
+export function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSignal): void {
     if (value === undefined) return;
+    // Set a flag for functions further downstream to smooth the signal
+    // @ts-ignore
+    // target.units === 'gain' && ((value as Signal)._smooth = true);
     value instanceof LFO || value instanceof Signal || value instanceof Envelope || value instanceof Follower || value instanceof Gain || value instanceof Scale
         ? value.connect(target)
-        : (target as Signal).rampTo(value, smoothing)
+        : (target as Signal).value = value;
 }
 
 export function pollSignal(signal: Signal<any>, callback: (value: number, time: number) => void): () => void {
