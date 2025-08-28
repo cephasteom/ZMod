@@ -4,9 +4,6 @@ import { Signal, Param, LFO, FilterRollOff, Envelope, Follower, Gain, Scale, get
 // Helpers
 export function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSignal): void {
     if (value === undefined) return;
-    // Set a flag for functions further downstream to smooth the signal
-    // @ts-ignore
-    // target.units === 'gain' && ((value as Signal)._smooth = true);
     value instanceof LFO || value instanceof Signal || value instanceof Envelope || value instanceof Follower || value instanceof Gain || value instanceof Scale
         ? value.connect(target)
         : (target as Signal).value = value;
@@ -63,4 +60,18 @@ export function nearestTimeStringFromHz(freqHz: number, bpm: number = getTranspo
     }
 
     return closest;
+}
+
+/**
+ * Wrapper around Signal class to ensure that it is always smoothed
+ */
+export class SmoothedSignal extends Signal {
+    constructor(value: number) {
+        super(value);
+    }
+
+    public setValueAtTime(value: number, time: number) {
+        this.rampTo(value, 0.05, time);
+        return this;
+    }   
 }

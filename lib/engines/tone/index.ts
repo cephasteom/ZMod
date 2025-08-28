@@ -13,7 +13,7 @@ import {
 
 import { busses as bs, inputs, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
-import { assignOrConnect, pollSignal, toControlSignal, toNumber } from './helpers';
+import { assignOrConnect, pollSignal, toControlSignal, toNumber, SmoothedSignal } from './helpers';
 import { 
     makeOsc, 
     makeFm, 
@@ -247,30 +247,38 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     recording: {
         loop: (node: AudioSignal, gain: ControlSignal = 0, beats: ControlSignal = 4): AudioSignal => {
             const output = new Gain(1);
+            const input = new Gain(0);
+            
             const looper = new Looper();
             
             node.connect(output);
-            node.connect(looper.input);
+            node.connect(input);
+            input.connect(looper.input);
             looper.connect(output);
-
-            let cancelPollSignal: () => void;
+            // set a flag so that further downstream it knows to smooth the gain
+            gain._smooth = true
 
             // wait for device to load
             setTimeout(() => {
                 looper.length((60 / getTransport().bpm.value) * 1000 * beats, 0);
-                cancelPollSignal = pollSignal(gain, (value, time) => looper.record(value, time));
+                looper.record(1,0)
+                assignOrConnect(input.gain, gain);
             }, 250);
 
             getTransport().on('start', (time) => {
                 looper.start(time);
+                looper.record(1,time)
                 looper.output.gain.rampTo(1, 0.1);
             });
-            getTransport().on('stop', () => looper.output.gain.rampTo(0, 0.1));
+            getTransport().on('stop', (time) => {
+                looper.output.gain.rampTo(0, 0.1)
+                looper.record(0, time);
+            });
 
             onDisposeFns.update((fns) => [...fns, () => {
                 output.dispose();
                 looper.dispose();
-                cancelPollSignal();
+                // cancelPollSignal();
                 // getTransport().off('start');
                 // getTransport().off('stop');
             }]);
@@ -401,9 +409,9 @@ export const libraryKeys = Object.entries(nodes)
 
 // Input functions
 const inputFns: Record<string, (node: any) => (...args: any[]) => AudioSignal> = {
-    signal: (node: any) => (value: number, time: number, lag?: number) => {
-        lag 
-            ? node.rampTo(value, lag / 1000, time)
+    signal: (node: any) => (value: number, time: number, lag: number = 0) => {
+        lag  || node._smooth
+            ? node.rampTo(value, (lag / 1000) || 0.01, time)
             : node.setValueAtTime(value, time);
         return node
     },
