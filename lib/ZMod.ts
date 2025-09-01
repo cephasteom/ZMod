@@ -81,6 +81,8 @@ e current audio patch created from the transpiled cod/tonee.
         // Load the library of Nodes 
         // loaded internally so that we might swap out tone.js for another library in future
         this.loadNodes(library)
+
+        this._transport.on('stop', () => this._patch?.output?.gain?.rampTo(0, 0.1)); // Fade out volume on stop
     }
 
     /**
@@ -157,7 +159,7 @@ e current audio patch created from the transpiled cod/tonee.
     /**
      * Build the audio graph from the transpiled code and start it.
      */
-    start(): ZMod {
+    start(time: number = 0): ZMod {
         // Don't create a new patch if the code hasn't changed
         try {
             if(this._isNewPatch) {
@@ -165,8 +167,8 @@ e current audio patch created from the transpiled cod/tonee.
                 this._patch?.dispose();
                 this._patch = makePatch(this._transpiledCode, this._busses);
             }
-            this._patch?.output?.gain?.rampTo(1, 0.1); // Fade in volume
-            this._transport?.start();
+            this._patch?.output?.gain?.rampTo(1, 0.1, time + 0.1); // Fade in volume
+            this._transport?.start(time);
         } catch (error) {
             zmodChannel.postMessage({ type: 'error', message: 'Zmod compile error: ' + error})
         }
@@ -178,9 +180,9 @@ e current audio patch created from the transpiled cod/tonee.
      * Stop the transport, pausing the audio graph without deleting it.
      * @returns ZMod
      */
-    stop(): ZMod {
-        this._transport?.stop();
-        this._patch?.output?.gain?.rampTo(0, 0.1); // Fade out volume
+    stop(time: number = 0): ZMod {
+        this._transport?.stop(time);
+        this._patch?.output?.gain?.rampTo(0, 0.1, time); // Fade out volume
         return this
     }
         

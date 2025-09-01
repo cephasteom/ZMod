@@ -13,7 +13,7 @@ import {
 
 import { busses as bs, inputs, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
-import { assignOrConnect, pollSignal, toControlSignal, toNumber } from './helpers';
+import { assignOrConnect, toControlSignal, toNumber } from './helpers';
 import { 
     makeOsc, 
     makeFm, 
@@ -143,7 +143,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
 
     modifiers: {
         amp: (node: AudioSignal, value: ControlSignal): Gain => {
-            const gainNode = new Gain(1);
+            const gainNode = new Gain(0);
             assignOrConnect(gainNode.gain, value);
             node.connect(gainNode);
 
@@ -257,30 +257,27 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             looper.connect(output);
             // set a flag so that further downstream it knows to smooth the gain
             gain._smooth = true
+            assignOrConnect(input.gain, gain);
 
             // wait for device to load
             setTimeout(() => {
                 looper.length((60 / getTransport().bpm.value) * 1000 * beats, 0);
                 looper.record(1,0)
-                assignOrConnect(input.gain, gain);
             }, 250);
 
             getTransport().on('start', (time) => {
                 looper.start(time);
-                looper.record(1,time)
-                looper.output.gain.rampTo(1, 0.1);
+                looper.output.gain.rampTo(1, 0.1, time);
             });
             getTransport().on('stop', (time) => {
-                looper.output.gain.rampTo(0, 0.1)
-                looper.record(0, time);
+                looper.output.gain.rampTo(0, 0.1);
+                looper.clear(time + 0.2);
             });
 
             onDisposeFns.update((fns) => [...fns, () => {
                 output.dispose();
+                // TODO: store looper for future use
                 looper.dispose();
-                // cancelPollSignal();
-                // getTransport().off('start');
-                // getTransport().off('stop');
             }]);
 
             return output;
