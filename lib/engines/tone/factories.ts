@@ -14,9 +14,10 @@ import { ControlSignal, AudioSignal } from './tone';
 import { assignOrConnect, toNumber, toRolloff } from './helpers';
 
 export function makeOsc(type: ToneOscillatorType, freq: ControlSignal = 220): AudioSignal {
-    const osc = new Oscillator(220, type).sync().start("0.05")
+    const osc = new Oscillator(220, type).start();
     assignOrConnect(osc.frequency, freq)
-    osc.volume.setValueAtTime(-12, 0); // Set initial volume to -12dB
+    osc.volume.value = -Infinity
+    osc.volume.rampTo(-12, 0.05); // Set initial volume to -12dB
     onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
     return osc
 }
@@ -27,11 +28,12 @@ export function makeFm(
     carrier: ToneOscillatorType = 'sine', 
     modulator: ToneOscillatorType = 'sine'
 ): AudioSignal {
-    const osc = new FMOscillator(220, carrier, modulator).sync().start("0.05");
+    const osc = new FMOscillator(220, carrier, modulator).start();
     assignOrConnect(osc.frequency, frequency);
     assignOrConnect(osc.harmonicity, harmonicity);
     assignOrConnect(osc.modulationIndex, modulationIndex);
-    osc.volume.setValueAtTime(-12, 0); // Set initial volume to -12dB
+    osc.volume.value = -Infinity
+    osc.volume.rampTo(-12, 0.05); // Set initial volume to -12dB
     onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
     return osc;
 }
@@ -42,10 +44,11 @@ export function makeAm(
     carrier: ToneOscillatorType = 'sine',
     modulator: ToneOscillatorType = 'sine'
 ): AudioSignal {
-    const osc = new AMOscillator(220, carrier, modulator).sync().start("0.05");
+    const osc = new AMOscillator(220, carrier, modulator).start();
     assignOrConnect(osc.frequency, frequency);
     assignOrConnect(osc.harmonicity, harmonicity);
-    osc.volume.setValueAtTime(-12, 0); // Set initial volume to -12dB
+    osc.volume.value = -Infinity
+    osc.volume.rampTo(-12, 0.05); // Set initial volume to -12dB
     onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
     return osc;
 }
@@ -54,10 +57,11 @@ export function makePwm(
     frequency: ControlSignal = 220, 
     modulationFrequency: ControlSignal = 0.5,
 ): AudioSignal {
-    const osc = new PWMOscillator(220).sync().start("0.05");
+    const osc = new PWMOscillator(220).start();
     assignOrConnect(osc.frequency, frequency);
     assignOrConnect(osc.modulationFrequency, modulationFrequency);
-    osc.volume.setValueAtTime(-12, 0); // Set initial volume to -12dB
+    osc.volume.value = -Infinity
+    osc.volume.rampTo(-12, 0.05); // Set initial volume to -12dB
     onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
     return osc;
 }
@@ -67,9 +71,10 @@ export function makeFat(
     spread: ControlSignal = 10, // spread in cents
     type: ToneOscillatorType = 'sine'
 ): AudioSignal {
-    const osc = new FatOscillator(220, type, toNumber(spread)).sync().start("0.05");
+    const osc = new FatOscillator(220, type, toNumber(spread)).start();
     assignOrConnect(osc.frequency, frequency);
-    osc.volume.setValueAtTime(-12, 0); // Set initial volume to -12dB
+    osc.volume.value = -Infinity
+    osc.volume.rampTo(-12, 0.05); // Set initial volume to -12dB
     onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
     return osc;
 }

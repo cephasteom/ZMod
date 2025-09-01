@@ -167,7 +167,7 @@ e current audio patch created from the transpiled cod/tonee.
                 this._patch?.dispose();
                 this._patch = makePatch(this._transpiledCode, this._busses);
             }
-            this._patch?.output?.gain?.rampTo(1, 0.1, time + 0.1); // Fade in volume
+            this._patch?.output?.gain?.rampTo(1, 0.05, time); // Fade in volume
             this._transport?.start(time);
         } catch (error) {
             zmodChannel.postMessage({ type: 'error', message: 'Zmod compile error: ' + error})

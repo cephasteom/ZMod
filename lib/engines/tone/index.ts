@@ -97,10 +97,12 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
         amsaw: (freq: ControlSignal = 220, harm: ControlSignal = 1): AudioSignal => makeAm(freq, harm, 'sawtooth'),
         
         pulse: (freq: ControlSignal = 220, width: ControlSignal = 0.5): AudioSignal => {
-            const pulseOsc = new PulseOscillator(220, toNumber(width)).sync().start("0.05");
-            assignOrConnect(pulseOsc.frequency, freq);
-            assignOrConnect(pulseOsc.width, width);
-            return pulseOsc;
+            const osc = new PulseOscillator(220, toNumber(width)).start();
+            assignOrConnect(osc.frequency, freq);
+            assignOrConnect(osc.width, width);
+            osc.volume.value = -Infinity
+            osc.volume.rampTo(-12, 0.05); // Set initial volume to -12dB
+            return osc;
         },
         pwm: (freq: ControlSignal = 220, modFreq: ControlSignal = 0.5): AudioSignal => makePwm(freq, modFreq),
     
