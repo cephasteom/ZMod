@@ -17,5 +17,5 @@ export type ControlSignal = number | Signal | LFO | Envelope | Follower | Param 
 export interface Patch {
     inputs: Record<string, (...args: any[]) => AudioSignal>
     output?: AudioSignal | Gain;
-    dispose: () => void
+    dispose: (time: number) => void
 }

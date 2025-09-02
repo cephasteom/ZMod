@@ -448,9 +448,9 @@ export const makePatch = (
     return {
         inputs: formatInputs(inputs || {}),
         output,
-        dispose: () => {
+        dispose: (time: number) => {
             const disposeFns = [...onDisposeFns.get()];
-            result.output?.gain?.rampTo(0, 0.1); // Fade out volume
+            result.output?.gain?.rampTo(0, 0.1, time + 1); // Fade out volume
             setTimeout(() => {
                 // @ts-ignore
                 disposeFns.forEach(fn => fn());

@@ -141,7 +141,6 @@ e current audio patch created from the transpiled cod/tonee.
             this._isNewPatch = (transpiled !== this._transpiledCode);
             this._transpiledCode = transpiled;
         } catch (error) {
-            console.log(error)
             zmodChannel.postMessage({ type: 'error', message: 'Zmod error: ' + error})
         }
 
@@ -164,10 +163,10 @@ e current audio patch created from the transpiled cod/tonee.
         try {
             if(this._isNewPatch) {
                 this._busses.forEach(bus => bus.disconnect()); // Disconnect all busses
-                this._patch?.dispose();
+                this._patch?.dispose(time);
                 this._patch = makePatch(this._transpiledCode, this._busses);
             }
-            this._patch?.output?.gain?.rampTo(1, 0.05, time); // Fade in volume
+            this._patch?.output?.gain?.rampTo(1, 0.01, time); // Fade in volume
             this._transport?.start(time);
         } catch (error) {
             zmodChannel.postMessage({ type: 'error', message: 'Zmod compile error: ' + error})
@@ -190,9 +189,9 @@ e current audio patch created from the transpiled cod/tonee.
      * Clears the current audio patch and resets the state.
      * You need to parse more code before you can run it again.
      */
-    clear(): ZMod {
-        this._transport?.stop();
-        this._patch?.dispose(); // Dispose of the current patch if it exists
+    clear(time: number = 0): ZMod {
+        this._transport?.stop(time);
+        this._patch?.dispose(time); // Dispose of the current patch if it exists
         this._patch = null; // Clear the graph reference
         this._transpiledCode = ''; // Reset the last transpiled code
         this._isNewPatch = false; // Reset the new patch flag so that we can play the same code again
