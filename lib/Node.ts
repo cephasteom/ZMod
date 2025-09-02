@@ -27,9 +27,9 @@ export class Node {
      */
     toCode(node: Node, ref: string, args: any[], id?: string): string {
         let code = `let ${ref} = ${node.type}(${args.join(",")});`;
-        code += id
+        code += (id
             ? ` inputs = {...inputs, ${id}: ${ref}};` // Add to inputs object if id is provided
-            : ''
+            : '')
 
         return code;
     }

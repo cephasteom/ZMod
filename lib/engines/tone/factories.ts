@@ -33,7 +33,7 @@ export function makeFm(
     assignOrConnect(osc.harmonicity, harmonicity);
     assignOrConnect(osc.modulationIndex, modulationIndex);
     osc.volume.value = -Infinity
-    osc.volume.rampTo(-12, 0.05); // Set initial volume to -12dB
+    osc.volume.rampTo(-12, 0.01); // Set initial volume to -12dB
     onDisposeFns.update((fns) => [...fns, () => osc.dispose()]);
     return osc;
 }

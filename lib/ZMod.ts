@@ -63,6 +63,11 @@ e current audio patch created from the transpiled cod/tonee.
     _isNewPatch: boolean = false;
 
     /**
+     * The timestamp of the last patch update.
+     */
+    _patchTimeStamp: number = 0;
+
+    /**
      * Library Keys - a list of categorised Node types available in the ZMod environment.
      * Useful for UI generation.
      */
@@ -111,7 +116,7 @@ e current audio patch created from the transpiled cod/tonee.
         // delete any ;
         code = code.replace(/;/g, '');
 
-        // replace any instances of e, e1, e2, etc. prepended with a #, to e.g. adsr(e), adsr(e1) etc.
+        // replace any instances of e, e1, e2, etc. prepended with a #, to e.g. adsr('e'), adsr('e1') etc.
         code = code.replace(/#(e\d*)/g, (_, name) => {
             return `adsr('${name}')`;
         });
@@ -138,7 +143,7 @@ e current audio patch created from the transpiled cod/tonee.
             const script = nodes.toScript();
             const transpiled = `let inputs = {};\n${script.lines.join("\n")}\nreturn {inputs, output: ${script.last}};`;
 
-            this._isNewPatch = (transpiled !== this._transpiledCode);
+            this._isNewPatch = transpiled !== this._transpiledCode
             this._transpiledCode = transpiled;
         } catch (error) {
             zmodChannel.postMessage({ type: 'error', message: 'Zmod error: ' + error})
@@ -165,6 +170,7 @@ e current audio patch created from the transpiled cod/tonee.
                 this._busses.forEach(bus => bus.disconnect()); // Disconnect all busses
                 this._patch?.dispose(time);
                 this._patch = makePatch(this._transpiledCode, this._busses);
+                this._patchTimeStamp = Date.now();
             }
             this._patch?.output?.gain?.rampTo(1, 0.01, time); // Fade in volume
             this._transport?.start(time);
@@ -202,6 +208,9 @@ e current audio patch created from the transpiled cod/tonee.
      * Play: triggers any input functions with matching names.
      */
     play(args: Record<string, any> = {}, time: number): ZMod {
+        // this gives the patch time to build
+        if (Date.now() - this._patchTimeStamp < 100) return this;
+
         Object.keys(this.inputs).forEach((key: string) => 
             args[key] !== undefined && this.inputs[key](args[key], time)
         )

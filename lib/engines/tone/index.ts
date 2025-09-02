@@ -409,7 +409,7 @@ export const libraryKeys = Object.entries(nodes)
 // Input functions
 const inputFns: Record<string, (node: any) => (...args: any[]) => AudioSignal> = {
     signal: (node: any) => (value: number, time: number, lag: number = 0) => {
-        lag  || node._smooth
+        lag || node._smooth
             ? node.rampTo(value, (lag / 1000) || 0.01, time)
             : node.setValueAtTime(value, time);
         return node
@@ -450,12 +450,12 @@ export const makePatch = (
         output,
         dispose: (time: number) => {
             const disposeFns = [...onDisposeFns.get()];
-            result.output?.gain?.rampTo(0, 0.1, time + 1); // Fade out volume
+            result.output?.gain?.rampTo(0, 1, time + 1); // Fade out volume
             setTimeout(() => {
                 // @ts-ignore
                 disposeFns.forEach(fn => fn());
                 output?.dispose?.()
-            }, 1000); // Allow time for fade out
+            }, 2000); // Allow time for fade out
         }
     }
 }
