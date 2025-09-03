@@ -13,7 +13,7 @@ import {
 
 import { busses as bs, inputs, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
-import { assignOrConnect, toControlSignal, toNumber } from './helpers';
+import { assignOrConnect, pollSignal, toControlSignal, toNumber } from './helpers';
 import { 
     makeOsc, 
     makeFm, 
@@ -260,11 +260,16 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             // set a flag so that further downstream it knows to smooth the gain
             gain._smooth = true
             assignOrConnect(input.gain, gain);
+            let cancelLength: () => void; 
 
             // wait for device to load
             setTimeout(() => {
-                looper.length((60 / getTransport().bpm.value) * 1000 * beats, 0);
+                // start recording
                 looper.record(1,0)
+                // listen to length signal / value
+                cancelLength = pollSignal(toControlSignal(beats), (value, time) => {
+                    looper.length((60 / getTransport().bpm.value) * 1000 * value, time);
+                });
             }, 250);
 
             getTransport().on('start', (time) => {
@@ -280,6 +285,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
                 output.dispose();
                 // TODO: store looper for future use
                 looper.dispose();
+                cancelLength();
             }]);
 
             return output;
