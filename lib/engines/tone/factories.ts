@@ -5,7 +5,6 @@ import {
     type ToneOscillatorType,
     Noise,
     getTransport,
-    immediate
 } from 'tone'
 
 import { onDisposeFns } from './stores';
