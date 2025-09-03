@@ -12,6 +12,7 @@ import {
 
 import { signals } from './components/signals';
 import { oscillators } from './components/oscillators';
+import { noise } from './components/noise';
 
 import { busses as bs, inputs, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
@@ -19,7 +20,6 @@ import { assignOrConnect, pollSignal, toControlSignal, toNumber } from './helper
 import { 
     makeLfo, 
     makeFilter,
-    makeNoise
 } from './factories';
 import { onDisposeFns } from './stores';
 import Looper from '../rnbo/components/Looper';
@@ -34,12 +34,7 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     core: { value: (val: number): number => val },    
     signals,
     oscillators,
-
-    noise: {
-        white: (rate: 1): AudioSignal => makeNoise('white', rate),
-        pink: (rate: 1): AudioSignal => makeNoise('pink', rate),
-        brown: (rate: 1): AudioSignal => makeNoise('brown', rate),
-    },
+    noise,
     
     // ControlSignals
     lfos: {
