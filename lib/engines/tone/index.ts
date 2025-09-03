@@ -247,10 +247,14 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     },
 
     recording: {
-        loop: (node: AudioSignal, gain: ControlSignal = 0, beats: ControlSignal = 4): AudioSignal => {
+        loop: (
+            node: AudioSignal, 
+            gain: ControlSignal = 0, // record volume
+            length: ControlSignal = 4, // length of loop
+            clear: ControlSignal = 0 // clear loop if value === 1
+        ): AudioSignal => {
             const output = new Gain(1);
             const input = new Gain(0);
-            
             const looper = new Looper();
             
             node.connect(output);
@@ -259,17 +263,31 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
             looper.connect(output);
             // set a flag so that further downstream it knows to smooth the gain
             gain._smooth = true
+
+            // connect gain controls
             assignOrConnect(input.gain, gain);
-            let cancelLength: () => void; 
+
+            // prepare length control
+            const lengthSignal = toControlSignal(length);
+            let cancelLength: () => void;
+
+            const clearSignal = toControlSignal(clear);
+            let cancelClear: () => void;
 
             // wait for device to load
             setTimeout(() => {
                 // start recording
                 looper.record(1,0)
-                // listen to length signal / value
-                cancelLength = pollSignal(toControlSignal(beats), (value, time) => {
+                // listen to length signal
+                cancelLength = pollSignal(lengthSignal, (value, time) => {
                     looper.length((60 / getTransport().bpm.value) * 1000 * value, time);
                 });
+                
+                // listen to clear signal
+                cancelClear = pollSignal(
+                    clearSignal, 
+                    (value, time) => value === 1 && looper.clear(time)
+                );
             }, 250);
 
             getTransport().on('start', (time) => {
@@ -283,9 +301,13 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
 
             onDisposeFns.update((fns) => [...fns, () => {
                 output.dispose();
-                // TODO: store looper for future use
                 looper.dispose();
+                
+                // dispose of polled signals and loops
                 cancelLength();
+                lengthSignal.dispose?.();
+                cancelClear();
+                clearSignal.dispose?.();
             }]);
 
             return output;
