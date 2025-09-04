@@ -2,25 +2,23 @@ import {
     Signal, Scale,
     Param, 
     Gain, Envelope, Panner, Follower,
-    Reverb, FeedbackDelay, Distortion, Chorus,
     Split,
-    FeedbackCombFilter,
     Delay,
-    type FilterRollOff,
     getTransport,
 } from 'tone'
 
 import { signals } from './components/signals';
 import { oscillators } from './components/oscillators';
 import { noise } from './components/noise';
+import { lfos } from './components/lfos';
+import { triggers } from './components/triggers';
+import { modifiers } from './components/modifiers';
+import { filters } from './components/filters';
+import { effects } from './components/effects';
 
 import { busses as bs, inputs, outputs } from './audio';
 import { ControlSignal, AudioSignal, Patch } from './tone';
 import { assignOrConnect, pollSignal, toControlSignal, toNumber } from './helpers';
-import { 
-    makeLfo, 
-    makeFilter,
-} from './factories';
 import { onDisposeFns } from './stores';
 import Looper from '../rnbo/components/Looper';
 
@@ -35,41 +33,11 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
     signals,
     oscillators,
     noise,
-    
-    // ControlSignals
-    lfos: {
-        lfo: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sine', frequency, min, max),
-        lfosine: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sine', frequency, min, max),
-        lfotri: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('triangle', frequency, min, max),
-        lfosquare: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('square', frequency, min, max),
-        lfosaw: (frequency: ControlSignal, min: number = 0, max: number = 1) : ControlSignal => makeLfo('sawtooth', frequency, min, max),
-    },
-
-    triggers: {
-        adsr: (attack: number = 100, decay: number = 100, sustain: number = 0.5, release: number = 800): Envelope => {
-            attack /= 1000;
-            decay /= 1000;
-            release /= 1000;
-            const envelope = new Envelope({attack, decay, sustain, release});
-            onDisposeFns.update((fns) => [...fns, () => envelope.dispose()]);
-            return envelope;
-        },
-
-        // impulse
-
-        // dust
-    },
-
-    modifiers: {
-        amp: (node: AudioSignal, value: ControlSignal): Gain => {
-            const gainNode = new Gain(0);
-            assignOrConnect(gainNode.gain, value);
-            node.connect(gainNode);
-
-            onDisposeFns.update((fns) => [...fns, () => gainNode.dispose()]);
-            return gainNode;
-        },
-    },
+    lfos,
+    triggers,
+    modifiers,
+    filters,
+    effects,
 
     metering: {
         follow: (node: AudioSignal, smoothing: ControlSignal = 0.01): ControlSignal => {
@@ -86,82 +54,6 @@ const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
         }
     },
 
-    filters: {
-        hpf: (node: AudioSignal, frequency: ControlSignal = 1000, q: ControlSignal = 1, rolloff: FilterRollOff = -12): AudioSignal => {
-            return makeFilter(node, 'highpass', frequency, q, rolloff);
-        },
-        lpf: (node: AudioSignal, frequency: ControlSignal = 1000, q: ControlSignal = 1, rolloff: FilterRollOff = -12): AudioSignal => {
-            return makeFilter(node, 'lowpass', frequency, q, rolloff);
-        },
-        bpf: (node: AudioSignal, frequency: ControlSignal = 1000, q: ControlSignal = 1, rolloff: FilterRollOff = -12): AudioSignal => {
-            return makeFilter(node, 'bandpass', frequency, q, rolloff);
-        },
-        fbf: (node: AudioSignal, delayTime: ControlSignal = 0.5, resonance: ControlSignal = 0.5): AudioSignal => {
-            const filter = new FeedbackCombFilter({
-                delayTime: toNumber(delayTime),
-                resonance: toNumber(resonance)
-            });
-            assignOrConnect(filter.delayTime, delayTime);
-            assignOrConnect(filter.resonance, resonance);
-            node.connect(filter);
-
-            onDisposeFns.update((fns) => [...fns, () => filter.dispose()]);
-
-            return filter;
-        }
-    },
-
-    effects: {
-        reverb: (node: AudioSignal, wet: ControlSignal = 0.5, decay: ControlSignal = 1000): AudioSignal => {
-            const reverb = new Reverb(toNumber(decay)/1000);
-            assignOrConnect(reverb.wet, wet);
-            node.connect(reverb);
-
-            onDisposeFns.update((fns) => [...fns, () => reverb.dispose()]);
-
-            return reverb;
-        },
-        delay: (node: AudioSignal, wet: ControlSignal = 0.5, delayTime: ControlSignal = 0.5, feedback: ControlSignal = 0.5): AudioSignal => {
-            const delay = new FeedbackDelay({
-                delayTime: toNumber(delayTime), 
-                feedback: toNumber(feedback),
-                wet: toNumber(wet)
-            });
-            assignOrConnect(delay.wet, wet);
-            assignOrConnect(delay.delayTime, delayTime);
-            assignOrConnect(delay.feedback, feedback);
-            node.connect(delay);
-
-            onDisposeFns.update((fns) => [...fns, () => delay.dispose()]);
-
-            return delay;
-        },
-        dist: (node: AudioSignal, wet: ControlSignal = 0.5, distortion: ControlSignal = 0.5): AudioSignal => {
-            const dist = new Distortion(toNumber(distortion));
-            assignOrConnect(dist.wet, wet);
-            node.connect(dist);
-
-            onDisposeFns.update((fns) => [...fns, () => dist.dispose()]);
-
-            return dist;
-        },
-        chorus: (node: AudioSignal, wet: ControlSignal = 0.5, frequency: ControlSignal = 1, feedback: ControlSignal = 0.005, depth: ControlSignal = 0.7): AudioSignal => {
-            const chorus = new Chorus({
-                wet: toNumber(wet),
-                frequency: toNumber(frequency),
-                feedback: toNumber(feedback),
-                depth: toNumber(depth)
-            });
-            assignOrConnect(chorus.wet, wet);
-            assignOrConnect(chorus.frequency, frequency);
-            assignOrConnect(chorus.feedback, feedback);
-            node.connect(chorus);
-
-            onDisposeFns.update((fns) => [...fns, () => chorus.dispose()]);
-
-            return chorus;
-        }
-    },
 
     recording: {
         loop: (
