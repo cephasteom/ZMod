@@ -1,5 +1,5 @@
 import { ControlSignal } from './tone';
-import { Signal, Param, LFO, FilterRollOff, Envelope, Follower, Gain, Scale, getTransport, Time, Loop } from 'tone';
+import { Signal, Param, LFO, FilterRollOff, Envelope, Follower, Gain, Scale, getTransport, Time, Loop, Multiply } from 'tone';
 
 // Helpers
 export function assignOrConnect(target: Signal<any> | Param<any>, value: ControlSignal): void {

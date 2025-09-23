@@ -71,7 +71,11 @@ export default class Library {
     fatsaw(freq: ControlSignal = 220, spread: number = 10): AudioSignal { return makeFat(freq, spread, 'sawtooth') }
 
     /** Signals */
-    sig(value: number): Signal { return new Signal(value) } 
+    sig(value: number): Signal { 
+        const node = new Signal(toNumber(value));
+        onDisposeFns.update((fns) => [...fns, () => node.dispose()]);
+        return node;
+    } 
     s(value: number): Signal { return this.sig(value) }
 
     add(signal: Signal, value: ControlSignal): Signal {
@@ -83,8 +87,8 @@ export default class Library {
     }
     mul(signal: Signal, value: ControlSignal): Signal {
         const node = new Multiply(toNumber(value));
-        assignOrConnect(node.factor, toControlSignal(value));
         signal.connect(node);
+        assignOrConnect(node.factor, toControlSignal(value));
         onDisposeFns.update((fns) => [...fns, () => node.dispose()]);
         return node;
     }
