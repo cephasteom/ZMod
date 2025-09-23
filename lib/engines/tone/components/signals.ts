@@ -27,7 +27,14 @@ export const signals = {
         onDisposeFns.update((fns) => [...fns, () => node.dispose()]);
         return node;
     },
-    ...Object.fromEntries([Abs, GreaterThan, GreaterThanZero, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp].map((Class) => {
+    gt: (signal: Signal, value: ControlSignal): Signal => {
+        const node = new GreaterThan(toNumber(value));
+        assignOrConnect(node.comparator, toControlSignal(value));
+        signal.connect(node);
+        onDisposeFns.update((fns) => [...fns, () => node.dispose()]);
+        return node;
+    },
+    ...Object.fromEntries([Abs, GreaterThanZero, Negate, GainToAudio, AudioToGain, Pow, Scale, ScaleExp].map((Class) => {
         // to lowercase and remove any _
         const name = Class.name.toLowerCase().replace(/_/g, '');
         return [name, (signal: Signal, ...args: number[]): Signal => {

@@ -21,226 +21,14 @@ import { ControlSignal, AudioSignal, Patch } from './tone';
 import { assignOrConnect, pollSignal, toControlSignal, toNumber } from './helpers';
 import { onDisposeFns } from './stores';
 import Looper from '../rnbo/components/Looper';
+import Library from './Library';
 
 export type { Patch } from "./tone.d.ts";
 export { outputs, destination } from './audio';
 
 let busses: Gain<"gain">[] = bs;
 
-// Library
-const nodes: Record<string, Record<string, (...args: any[]) => any>> = {
-    core: { value: (val: number): number => val },    
-    signals,
-    oscillators,
-    noise,
-    lfos,
-    triggers,
-    modifiers,
-    filters,
-    effects,
-
-    metering: {
-        follow: (node: AudioSignal, smoothing: ControlSignal = 0.01): ControlSignal => {
-            const follower = new Follower(toNumber(smoothing));
-            const signal = new Signal();
-            node.connect(follower);
-            follower.connect(signal);
-
-            onDisposeFns.update((fns) => [...fns, () => {
-                signal.dispose();
-                follower.dispose();
-            }]);
-            return signal;
-        }
-    },
-
-    recording: {
-        loop: (
-            node: AudioSignal, 
-            gain: ControlSignal = 0, // record volume
-            length: ControlSignal = 4, // length of loop
-            clear: ControlSignal = 0 // clear loop if value === 1
-        ): AudioSignal => {
-            const output = new Gain(1);
-            const input = new Gain(0);
-            const looper = new Looper();
-            
-            node.connect(output);
-            node.connect(input);
-            input.connect(looper.input);
-            looper.connect(output);
-            // set a flag so that further downstream it knows to smooth the gain
-            gain._smooth = true
-
-            // connect gain controls
-            assignOrConnect(input.gain, gain);
-
-            // prepare length control
-            const lengthSignal = toControlSignal(length);
-            let cancelLength: () => void;
-
-            const clearSignal = toControlSignal(clear);
-            let cancelClear: () => void;
-
-            // wait for device to load
-            setTimeout(() => {
-                // start recording
-                looper.record(1,0)
-                // listen to length signal
-                cancelLength = pollSignal(lengthSignal, (value, time) => {
-                    looper.length((60 / getTransport().bpm.value) * 1000 * value, time);
-                });
-                
-                // listen to clear signal
-                cancelClear = pollSignal(
-                    clearSignal, 
-                    (value, time) => value === 1 && looper.clear(time)
-                );
-            }, 250);
-
-            getTransport().on('start', (time) => {
-                looper.start(time);
-                looper.output.gain.rampTo(1, 0.1, time);
-            });
-            getTransport().on('stop', (time) => {
-                looper.output.gain.rampTo(0, 0.1);
-                looper.clear(time + 0.2);
-            });
-
-            onDisposeFns.update((fns) => [...fns, () => {
-                output.dispose();
-                looper.dispose();
-                
-                // dispose of polled signals and loops
-                cancelLength();
-                lengthSignal.dispose?.();
-                cancelClear();
-                clearSignal.dispose?.();
-            }]);
-
-            return output;
-        }
-    },
-
-    routing: {
-        pan: (node: AudioSignal, value: ControlSignal = 0.5): AudioSignal => {
-            const out = new Gain(1);
-            // ensure value is a Signal
-            const sig = toControlSignal(value);
-            // scale the value to -1 to 1 so we can use 0 - 1 for panning
-            const scale = new Scale(-1, 1)
-            sig.connect(scale);
-            const panner = new Panner(toNumber(scale));
-            assignOrConnect(panner.pan, scale);
-            node.connect(panner);
-            panner.connect(out);
-
-            onDisposeFns.update((fns) => [...fns, () => {
-                panner.dispose();
-                scale.dispose();
-                out.dispose();
-            }]);
-
-            return out;
-        },
-
-        input: (...channels: number[]): AudioSignal => {
-            // If no channels are specified, use the first two channels
-            channels = channels.length > 0
-                ? channels
-                : [0,1]
-            
-            // Create a Gain node to control the input volume
-            const output = new Gain(2);
-            
-            inputs.connect(output);
-
-            inputs.open()
-                .then(() => console.log('input is open'))
-                .catch(err => console.error('input access denied:', err));
-
-            onDisposeFns.update((fns) => [...fns, () => {
-                output.dispose();
-                inputs.close();
-            }]);
-
-            // Return the Gain node so that we can control the volume
-            return output;
-        },
-    
-        out: (node: AudioSignal | number, ...channels: number[]): AudioSignal => {
-            const output = new Gain(0);
-            node.connect(output)
-
-            // If no channels are specified, use the first two channels
-            channels = channels.length > 0
-                ? channels
-                : [0,1]
-            
-            // split the output into mono channels
-            const split = new Split(channels.length);
-            output.connect(split);
-
-            // connect each mono channel to the output bus
-            channels.forEach((ch, i) => split.connect(outputs, i, ch));
-            
-            onDisposeFns.update((fns) => [...fns, () => {
-                output.dispose();
-                split.dispose();
-            }]);
-
-            // return the gain node so that we can control the volume
-            return output
-        },
-
-        bus: (nodeOrBus: AudioSignal | number, bus?: number): AudioSignal => {
-            // route from bus
-            if (typeof nodeOrBus === 'number') {
-                const i = nodeOrBus;
-                const delay = new Delay(0.01); // prevent feedback loop
-                busses[i].connect(delay);
-                onDisposeFns.update((fns) => [...fns, () => delay.dispose()]);
-                return delay;
-            // route to bus
-            } else {
-                const node = nodeOrBus as AudioSignal;
-                node.connect(busses[bus || 0]);
-                return node
-            }
-        },
-
-        stack: (...nodes: AudioSignal[]): AudioSignal => {
-            if (nodes.length === 0) {
-                throw new Error("No nodes provided to stack");
-            }
-            const output = new Gain(1);
-            nodes.forEach(node => {
-                node.connect(output);
-                onDisposeFns.update((fns) => [
-                    ...fns, () => {
-                        node.gain?.rampTo(0, 0.1); // Fade out volume
-                        setTimeout(() => node.dispose(), 1000);
-                    }
-                ]);
-            })
-            return output;
-        }
-    }
-}
-
-export const library: Record<string, (...args: any[]) => any> = Object.values(nodes)
-    .reduce((acc, val) => {      
-        Object.entries(val).forEach(([key, value]) => {
-            acc[key] = value;
-        });
-        return acc;
-    })
-
-export const libraryKeys = Object.entries(nodes)
-    .reduce((obj, [key, fns]) => ({
-        ...obj,
-        [key]: Object.keys(fns)
-    }), {} as Record<string, string[]>);
+export const library = new Library();
 
 // Input functions
 const inputFns: Record<string, (node: any) => (...args: any[]) => AudioSignal> = {
@@ -275,9 +63,9 @@ export const makePatch = (
     busses = bs || busses; // Use provided busses or default
     
     const result = new Function(
-        ...Object.keys(library), 
+        ...library.keys, 
         code
-    )(...Object.values(library))
+    )(...library.values)
     
     const { inputs, output } = result;
 

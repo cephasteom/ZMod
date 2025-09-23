@@ -11,10 +11,10 @@ if (localStorage.getItem("zmod-code")) {
 
 const zm = new ZMod().toDestination();
 
-nodesDisplay.innerHTML = Object.entries(zm.libraryKeys)
-    .filter(([category, _]) => category !== "core")
-    .map(([category, nodes]) => `<p><strong>${category}</strong>: ${nodes.join(", ")}</p>`)
-    .join("")
+// nodesDisplay.innerHTML = Object.entries(zm.libraryKeys)
+//     .filter(([category, _]) => category !== "core")
+//     .map(([category, nodes]) => `<p><strong>${category}</strong>: ${nodes.join(", ")}</p>`)
+//     .join("")
 
 const start = () => zm.set(codeInput.value).start()
 const stop = () => zm.stop()

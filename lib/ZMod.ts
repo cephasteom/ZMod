@@ -1,8 +1,9 @@
 import { Merge, getTransport, getContext, BaseContext, Split, Gain } from "tone";
-import { library, libraryKeys, makePatch, type Patch, outputs, destination } from "./engines/tone";
+import { library, makePatch, type Patch, outputs, destination } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 import { busses } from "./engines/tone/audio";
+import Library from "./engines/tone/Library";
 
 const zmodChannel = new BroadcastChannel('zmod')
 
@@ -67,12 +68,6 @@ e current audio patch created from the transpiled cod/tonee.
      */
     _patchTimeStamp: number = 0;
 
-    /**
-     * Library Keys - a list of categorised Node types available in the ZMod environment.
-     * Useful for UI generation.
-     */
-    libraryKeys: Record<string, string[]> = libraryKeys;
-
     constructor(
         options?: {context?: BaseContext, transport?: TransportClass, busses?: Gain<"gain">[]}
     ) {
@@ -95,10 +90,9 @@ e current audio patch created from the transpiled cod/tonee.
      * This method registers the Nodes from the provided library
      * @param library 
      */
-    private loadNodes(library: Record<string, (...args: any[]) => Node>) {
+    private loadNodes(library: Library) {
         // flatten object so we just get the inner objects containing the node functions
-        
-        this._nodes = Object.keys(library)
+        this._nodes = library.keys
             .reduce((acc, type) => {
                 acc[type] = registerNode(type);
                 return acc;
