@@ -189,7 +189,9 @@ export default class Library {
         return envelope;
     }
     
-    // impulse
+    imp(frequency: ControlSignal = 1): AudioSignal {
+        return this.gt(this.lfosaw(frequency, 1, 0), 0.9) as AudioSignal;
+    }
 
     // dust
 
