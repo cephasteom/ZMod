@@ -1,26 +1,10 @@
 import { 
-    Signal, Scale,
-    Param, 
-    Gain, Envelope, Panner, Follower,
-    Split,
-    Delay,
-    getTransport,
+    Signal, Param, Gain, Envelope
 } from 'tone'
 
-import { signals } from './components/signals';
-import { oscillators } from './components/oscillators';
-import { noise } from './components/noise';
-import { lfos } from './components/lfos';
-import { triggers } from './components/triggers';
-import { modifiers } from './components/modifiers';
-import { filters } from './components/filters';
-import { effects } from './components/effects';
-
-import { busses as bs, inputs, outputs } from './audio';
-import { ControlSignal, AudioSignal, Patch } from './tone';
-import { assignOrConnect, pollSignal, toControlSignal, toNumber } from './helpers';
+import { busses as bs } from './audio';
+import { AudioSignal, Patch } from './tone';
 import { onDisposeFns } from './stores';
-import Looper from '../rnbo/components/Looper';
 import Library from './Library';
 
 export type { Patch } from "./tone.d.ts";

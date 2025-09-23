@@ -9,6 +9,17 @@ import Looper from "../rnbo/components/Looper";
 import { busses, inputs, outputs } from "./audio";
 
 export default class Library {
+    constructor() {
+        // bind all methods to this
+        this.keys
+            .forEach(name => {
+                const method = (this as any)[name];
+                if (typeof method === 'function') {
+                    (this as any)[name] = method.bind(this);
+                }
+            });
+    }
+
     get keys() {
         // get all method names except constructor and private methods (starting with _)
         return Object.getOwnPropertyNames(Library.prototype)
@@ -19,7 +30,7 @@ export default class Library {
     }
 
     get values() {
-        return this.keys.map(key => (this as any)[key]);
+        return this.keys.map(key => (this as any)[key])
     }
 
     /** Oscillators */
