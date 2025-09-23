@@ -33,6 +33,9 @@ export default class Library {
         return this.keys.map(key => (this as any)[key])
     }
 
+    /** Core */
+    value(val: number): number {return val}
+
     /** Oscillators */
     sine(freq: ControlSignal = 220): AudioSignal { return makeOsc('sine', freq) }
     tri(freq: ControlSignal = 220): AudioSignal { return makeOsc('triangle', freq) }
@@ -70,9 +73,7 @@ export default class Library {
     /** Signals */
     sig(value: number): Signal { return new Signal(value) } 
     s(value: number): Signal { return this.sig(value) }
-    value(value: number): Signal { 
-        return this.sig(value) 
-    } // alias for sig
+
     add(signal: Signal, value: ControlSignal): Signal {
         const node = new Add(toNumber(value));
         assignOrConnect(node.addend, value);
