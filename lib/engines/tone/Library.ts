@@ -297,6 +297,7 @@ export default class Library {
         node: AudioSignal, 
         gain: ControlSignal = 0, // record volume
         length: ControlSignal = 4, // length of loop
+        rate: ControlSignal = 1, // playback rate
         clear: ControlSignal = 0 // clear loop if value === 1
     ): AudioSignal {
         const output = new Gain(1);
@@ -307,7 +308,9 @@ export default class Library {
         node.connect(input);
         input.connect(looper.input);
         looper.connect(output);
+        
         // set a flag so that further downstream it knows to smooth the gain
+        gain = toControlSignal(gain);
         gain._smooth = true
 
         // connect gain controls
@@ -320,13 +323,22 @@ export default class Library {
         const clearSignal = toControlSignal(clear);
         let cancelClear: () => void;
 
+        const rateSignal = toControlSignal(rate);
+        let cancelRate: () => void;
+
         // wait for device to load
         setTimeout(() => {
             // start recording
             looper.record(1,0)
+            
             // listen to length signal
             cancelLength = pollSignal(lengthSignal, (value, time) => {
                 looper.length((60 / getTransport().bpm.value) * 1000 * value, time);
+            });
+
+            // listen to rate signal
+            cancelRate = pollSignal(rateSignal, (value, time) => {
+                looper.rate(value, time);
             });
             
             // listen to clear signal
@@ -354,6 +366,9 @@ export default class Library {
             lengthSignal.dispose?.();
             cancelClear();
             clearSignal.dispose?.();
+            cancelRate();
+            rateSignal.dispose?.();
+            gain.dispose?.();
         }]);
 
         return output;

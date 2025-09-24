@@ -12,6 +12,7 @@ class Looper extends RNBODevice {
         this.length = this.length.bind(this);
         this.record = this.record.bind(this);
         this.clear = this.clear.bind(this);
+        this.rate = this.rate.bind(this);
         this.params = Object.getOwnPropertyNames(this);
 
         this.initDevice();
@@ -38,6 +39,12 @@ class Looper extends RNBODevice {
      * Clear - clear the buffer
      */
     clear(time: number): void { this.messageDevice('clear', 1, time) }
+
+    /**
+     * Rate - set the playback rate
+     * @param {number} value - playback rate (1 = normal speed)
+     */
+    rate(value: number = 1, time: number): void { this.messageDevice('rate', value, time) }
 }
 
 export default Looper;
