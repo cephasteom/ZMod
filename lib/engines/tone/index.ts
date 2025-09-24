@@ -29,13 +29,14 @@ const inputFns: Record<string, (node: any) => (...args: any[]) => AudioSignal> =
     }
 }
 
-function formatInputs(inputs: Record<string, Signal | Param | Envelope>): Record<string, (...args: any[]) => void> {
-    return Object.entries(inputs).reduce((acc, [key, value]) => {
-        const name = value.constructor.name.toLowerCase().replace(/_/g, '').toLowerCase()
+function formatInputs(inputs: Record<string, (Signal | Param | Envelope)[]>): Record<string, ((...args: any[]) => void)[]> {
+    return Object.entries(inputs).reduce((acc, [key, array]) => {
+        // infer type from first element in array - assume all elements are of same type
+        const name = array[0].constructor.name.toLowerCase().replace(/_/g, '').toLowerCase()
         const fn = inputFns[name];
-        acc[key] = fn ? fn(value) : () => {}
+        acc[key] = array.map(value => fn ? fn(value) : () => {});
         return acc;
-    }, {} as Record<string, (...args: any[]) => void>);
+    }, {} as Record<string, ((...args: any[]) => void)[]>);
 }
 
 // Patch creation

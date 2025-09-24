@@ -206,7 +206,7 @@ e current audio patch created from the transpiled cod/tonee.
         if (Date.now() - this._patchTimeStamp < 100) return this;
 
         Object.keys(this.inputs).forEach((key: string) => 
-            args[key] !== undefined && this.inputs[key](args[key], time)
+            args[key] !== undefined && this.inputs[key].forEach(fn => fn(args[key], time))
         )
 
         const { dur = 1000 } = args
@@ -232,7 +232,7 @@ e current audio patch created from the transpiled cod/tonee.
             .filter((key) => /^e\d*$/.test(key))
             .forEach((key) => {
                 const envArgs = envelopes[key] || {};
-                this.inputs[key](envArgs).triggerAttackRelease(dur / 1000, time);
+                this.inputs[key].forEach(fn => fn(envArgs).triggerAttackRelease(dur / 1000, time));
             });
         return this
     }
@@ -244,7 +244,7 @@ e current audio patch created from the transpiled cod/tonee.
         Object.keys(this.inputs).forEach((key: string) => {
             const rawKey = key.replace(/^_/, ''); // remove leading underscore
             args[rawKey] !== undefined
-                && this.inputs[key](args[rawKey], time, lag)
+                && this.inputs[key].forEach(fn => fn(args[rawKey], time, lag))
         });
 
         return this;
@@ -258,7 +258,7 @@ e current audio patch created from the transpiled cod/tonee.
         Object.keys(this.inputs)
             .filter((key) => /^e\d*$/.test(key))
             .forEach((key) => {
-                this.inputs[key]({}).triggerRelease(time, release / 1000);
+                this.inputs[key].forEach(fn => fn({}).triggerRelease(time, release / 1000));
             });
         return this;
     }
