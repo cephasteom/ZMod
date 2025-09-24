@@ -346,7 +346,7 @@ export default class Library {
                 clearSignal, 
                 (value, time) => value === 1 && looper.clear(time)
             );
-        }, 250);
+        }, 1000);
 
         getTransport().on('start', (time) => {
             looper.start(time);

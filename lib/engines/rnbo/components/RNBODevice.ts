@@ -37,13 +37,16 @@ class RNBODevice {
             .then(device => {
                 this.device = device;
                 
+                // delay slightly to give it time to initialise
                 // @ts-ignore
                 device.node.connect(this.output._gainNode._nativeAudioNode);
                 // @ts-ignore
                 this.input._gainNode._nativeAudioNode.connect(device.node);
+
                 
                 this.ready = true;
-            }))
+                
+            }));
     }
 
     /** @hidden */

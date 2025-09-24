@@ -21,7 +21,9 @@ class Looper extends RNBODevice {
     /** 
      * Start - start the loop
      */
-    start(time: number): void { this.messageDevice('start', 1, time) }
+    start(time: number): void { 
+        this.messageDevice('start', 1, time)
+    }
 
     /**
      * Length - set the length of the loop in ms
