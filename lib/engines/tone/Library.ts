@@ -11,6 +11,7 @@ export default class Library {
 
     constructor(busses: Gain<"gain">[] = []) {
         this.busses = busses;
+        console.log(this.busses)
         
         // bind all methods to this
         this.keys

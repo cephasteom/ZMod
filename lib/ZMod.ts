@@ -161,7 +161,7 @@ e current audio patch created from the transpiled cod/tonee.
         // Don't create a new patch if the code hasn't changed
         try {
             if(this._isNewPatch) {
-                // this._busses.forEach(bus => bus.disconnect()); // Disconnect all busses
+                this._busses.forEach(bus => bus.disconnect()); // Disconnect all busses
                 this._patch?.dispose(time);
                 this._patch = makePatch(this._transpiledCode, this._busses);
                 this._patchTimeStamp = Date.now();
