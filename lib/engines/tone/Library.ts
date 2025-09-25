@@ -11,7 +11,6 @@ export default class Library {
 
     constructor(busses: Gain<"gain">[] = []) {
         this.busses = busses;
-        console.log(this.busses)
         
         // bind all methods to this
         this.keys
@@ -454,7 +453,6 @@ export default class Library {
             const i = nodeOrBus;
             const delay = new Delay(0.01); // prevent feedback loop
             this.busses[i].connect(delay);
-            console.log(this.busses[i])
             onDisposeFns.update((fns) => [...fns, () => delay.dispose()]);
             return delay;
         // route to bus
