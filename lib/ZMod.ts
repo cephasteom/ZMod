@@ -1,5 +1,5 @@
 import { Merge, getTransport, getContext, BaseContext, Split, Gain } from "tone";
-import { library, makePatch, type Patch, outputs, destination } from "./engines/tone";
+import { makePatch, type Patch, outputs, destination } from "./engines/tone";
 import { Node, type NodeInput, registerNode } from "./Node";
 import { TransportClass } from "tone/build/esm/core/clock/Transport";
 import { busses } from "./engines/tone/audio";
@@ -80,7 +80,7 @@ e current audio patch created from the transpiled cod/tonee.
         
         // Load the library of Nodes 
         // loaded internally so that we might swap out tone.js for another library in future
-        this.loadNodes(library)
+        this.loadNodes((new Library()).keys);
 
         this._transport.on('stop', () => this._patch?.output?.gain?.rampTo(0, 0.1)); // Fade out volume on stop
     }
@@ -90,9 +90,9 @@ e current audio patch created from the transpiled cod/tonee.
      * This method registers the Nodes from the provided library
      * @param library 
      */
-    private loadNodes(library: Library) {
+    private loadNodes(keys: string[]) {
         // flatten object so we just get the inner objects containing the node functions
-        this._nodes = library.keys
+        this._nodes = keys
             .reduce((acc, type) => {
                 acc[type] = registerNode(type);
                 return acc;
@@ -161,7 +161,7 @@ e current audio patch created from the transpiled cod/tonee.
         // Don't create a new patch if the code hasn't changed
         try {
             if(this._isNewPatch) {
-                this._busses.forEach(bus => bus.disconnect()); // Disconnect all busses
+                // this._busses.forEach(bus => bus.disconnect()); // Disconnect all busses
                 this._patch?.dispose(time);
                 this._patch = makePatch(this._transpiledCode, this._busses);
                 this._patchTimeStamp = Date.now();

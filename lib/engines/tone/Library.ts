@@ -1,15 +1,17 @@
-// TODO: this would all be better as a class so we can use this...
-
 import { Abs, Add,  Chorus,  Delay,  Distortion,  Envelope,  FeedbackCombFilter,  FeedbackDelay,  FilterRollOff,  Follower,  Gain,  getTransport,  GreaterThan, Multiply, Negate, Panner, Pow, PulseOscillator, Reverb, Scale, ScaleExp, Signal, Split, Subtract } from "tone";
 import { AudioSignal, ControlSignal } from "./tone";
 import { assignOrConnect, pollSignal, toControlSignal, toNumber } from "./helpers";
 import { onDisposeFns } from "./stores";
 import { makeAm, makeFat, makeFilter, makeFm, makeLfo, makeNoise, makeOsc, makePwm } from "./factories";
 import Looper from "../rnbo/components/Looper";
-import { busses, inputs, outputs } from "./audio";
+import { inputs, outputs } from "./audio";
 
 export default class Library {
-    constructor() {
+    busses: Gain<"gain">[];
+
+    constructor(busses: Gain<"gain">[] = []) {
+        this.busses = busses;
+        
         // bind all methods to this
         this.keys
             .forEach(name => {
@@ -450,13 +452,13 @@ export default class Library {
         if (typeof nodeOrBus === 'number') {
             const i = nodeOrBus;
             const delay = new Delay(0.01); // prevent feedback loop
-            busses[i].connect(delay);
+            this.busses[i].connect(delay);
             onDisposeFns.update((fns) => [...fns, () => delay.dispose()]);
             return delay;
         // route to bus
         } else {
             const node = nodeOrBus as AudioSignal;
-            node.connect(busses[bus || 0]);
+            node.connect(this.busses[bus || 0]);
             return node
         }
     }

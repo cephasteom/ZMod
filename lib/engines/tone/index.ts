@@ -12,8 +12,6 @@ export { outputs, destination } from './audio';
 
 let busses: Gain<"gain">[] = bs;
 
-export const library = new Library();
-
 // Input functions
 const inputFns: Record<string, (node: any) => (...args: any[]) => AudioSignal> = {
     signal: (node: any) => (value: number, time: number, lag: number = 0) => {
@@ -45,7 +43,7 @@ export const makePatch = (
     bs?: Gain<"gain">[]
 ): Patch => {
     onDisposeFns.set([]); // Reset dispose functions
-    busses = bs || busses; // Use provided busses or default
+    const library = new Library(bs || busses);
     
     const result = new Function(
         ...library.keys, 
