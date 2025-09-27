@@ -1,6 +1,7 @@
 import { Oscillator, getContext, Gain } from 'tone';
-import { createDevice, MessageEvent } from '@rnbo/js'
 import type { Device, IPatcher } from '@rnbo/js'
+import pkg from '@rnbo/js';
+const { createDevice, MessageEvent } = pkg;
 
 export const dummy = new Oscillator({volume: -Infinity, frequency: 0, type: 'sine1'}).start();
 
